@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -34,4 +35,8 @@ func InitMainConfig(configPath string) (mainConfig, error) {
 
 func (cfg *mainConfig) GetBackendList() []string {
 	return cfg.BackendList
+}
+
+func (cfg *mainConfig) GetServerAddress() string {
+	return net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)
 }

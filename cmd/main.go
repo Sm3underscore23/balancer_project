@@ -1,14 +1,17 @@
 package main
 
 import (
+	api "balancer/internal/api/proxy"
 	"balancer/internal/config"
 	"balancer/internal/model"
-	checker "balancer/internal/service/balancer"
+	"balancer/internal/service/balancer"
+	"balancer/internal/service/checker"
+	"fmt"
 	"log"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
-	"time"
 )
 
 func main() {
@@ -50,5 +53,15 @@ func main() {
 
 	go checker.CheckerWithTicker()
 
-	time.Sleep(time.Hour)
+	balancer := balancer.NewBalancerService(&bcknPool)
+
+	h := api.NewUserImplementation(balancer, &bcknPool)
+
+	http.HandleFunc("/", h.Proxy)
+
+	fmt.Println(mainConfig.GetServerAddress())
+	
+	if err := http.ListenAndServe(mainConfig.GetServerAddress(), nil); err != nil {
+		log.Fatalf("failed listening and serving: %s", err)
+	}
 }

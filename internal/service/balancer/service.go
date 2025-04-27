@@ -1,14 +1,14 @@
-package checker
+package balancer
 
 import (
 	"balancer/internal/model"
 	"balancer/internal/service"
 )
 
-type poolChecker struct {
+type poolBalancer struct {
 	pool *model.BackendPool
 }
 
-func NewCheckerService(pool *model.BackendPool) service.CheckerService {
-	return &poolChecker{pool: pool}
+func NewBalancerService(pool *model.BackendPool) service.BalancerService {
+	return &poolBalancer{pool: pool}
 }
