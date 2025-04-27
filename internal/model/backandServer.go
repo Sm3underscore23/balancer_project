@@ -7,11 +7,12 @@ import (
 
 type BackendServer struct {
 	IsOnline bool
-	Url    string
-	Prx    *httputil.ReverseProxy
+	Url      string
+	Prx      *httputil.ReverseProxy
 }
 
 type BackendPool struct {
-	Mu   sync.Mutex
-	Pool []*BackendServer
+	Current uint64
+	Mu      sync.RWMutex
+	Pool    []*BackendServer
 }

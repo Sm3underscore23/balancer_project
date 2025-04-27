@@ -1,8 +1,7 @@
 server:
-  host: lockalhost
-  posrt: 8080
+  host: localhost
+  port: 8080
 
 backend_list:
-  - http://google.com
   - http://localhost:8081
   - http://localhost:8082
