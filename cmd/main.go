@@ -4,63 +4,54 @@ import (
 	api "balancer/internal/api/proxy"
 	"balancer/internal/config"
 	"balancer/internal/model"
-	"balancer/internal/service/balancer"
-	"balancer/internal/service/checker"
+	userratelimits "balancer/internal/repository/user-rate-limits"
+	"balancer/internal/service"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"sync"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
+	ctx := context.Background()
+
 	mainConfig, err := config.InitMainConfig("config/config.yaml")
 	if err != nil {
 		log.Fatalf("failed config loading: %s", err)
 	}
 
-	var bcknPool model.BackendPool
-
-	wg := sync.WaitGroup{}
-
-	for _, urlString := range mainConfig.GetBackendList() {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			urlB, err := url.Parse(urlString)
-			if err != nil {
-				log.Fatalf("backend url is not valid: %s", err)
-			}
-
-			prx := httputil.NewSingleHostReverseProxy(urlB)
-
-			bcknPool.Mu.Lock()
-			defer bcknPool.Mu.Unlock()
-
-			bcknPool.Pool = append(bcknPool.Pool, &model.BackendServer{
-				Url: urlString,
-				Prx: prx,
-			})
-		}()
+	bcknPool := model.BackendPool{
+		Pool: mainConfig.InitBackendList(),
 	}
-	wg.Wait()
 
-	checker := checker.NewCheckerService(&bcknPool)
+	dbPool, err := pgxpool.New(ctx, mainConfig.DbConfigLoad())
+	if err != nil {
+		log.Fatalf("failed to connect to database: %s", err)
+	}
 
-	checker.CheckerOnce()
+	db := userratelimits.NewUserRateLimitsRepo(dbPool)
 
-	go checker.CheckerWithTicker()
+	srv := service.NewService(&bcknPool, db, mainConfig.GetDefoulLimits())
 
-	balancer := balancer.NewBalancerService(&bcknPool)
+	t := time.NewTicker(time.Second * time.Duration(mainConfig.TickerRate))
 
-	h := api.NewUserImplementation(balancer, &bcknPool)
+	go func() {
+		if err := srv.CheckerWithTicker(ctx, t); err != nil {
+			log.Fatalf("failed init or check backend list: %s", err)
+		}
+	}()
+
+	h := api.NewProxyHandler(&bcknPool, srv)
 
 	http.HandleFunc("/", h.Proxy)
 
+	http.HandleFunc("/clients", h.LimitsManager)
+
 	fmt.Println(mainConfig.GetServerAddress())
-	
+
 	if err := http.ListenAndServe(mainConfig.GetServerAddress(), nil); err != nil {
 		log.Fatalf("failed listening and serving: %s", err)
 	}
