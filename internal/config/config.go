@@ -3,7 +3,6 @@ package config
 import (
 	"balancer/internal/model"
 	"fmt"
-	"log"
 	"net"
 	"os"
 
@@ -88,7 +87,6 @@ func (cfg *mainConfig) InitBackendList() []*model.BackendServer {
 			Method:   b.Config.Health.Method,
 			HelthUrl: b.BackendURL + b.Config.Health.URL,
 		}
-		log.Println("Loaded backend:", b.BackendURL, "Method:", b.Config.Health.Method)
 	}
 	return backendList
 }

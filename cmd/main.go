@@ -7,7 +7,6 @@ import (
 	userratelimits "balancer/internal/repository/user-rate-limits"
 	"balancer/internal/service"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -16,12 +15,20 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	// fmt.Println("Enter config path:")
+	// in := bufio.NewReader(os.Stdin)
+	// rowConfigPath, err := in.ReadString('\n')
+	// if err != nil {
+	// 	log.Fatalf("failed to read config path: %s", err)
+	// }
+	// strings.TrimSpace(rowConfigPath)
 
 	mainConfig, err := config.InitMainConfig("config/config.yaml")
 	if err != nil {
 		log.Fatalf("failed config loading: %s", err)
 	}
+
+	ctx := context.Background()
 
 	bcknPool := model.BackendPool{
 		Pool: mainConfig.InitBackendList(),
@@ -49,8 +56,6 @@ func main() {
 	http.HandleFunc("/", h.Proxy)
 
 	http.HandleFunc("/clients", h.LimitsManager)
-
-	fmt.Println(mainConfig.GetServerAddress())
 
 	if err := http.ListenAndServe(mainConfig.GetServerAddress(), nil); err != nil {
 		log.Fatalf("failed listening and serving: %s", err)
