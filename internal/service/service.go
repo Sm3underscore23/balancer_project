@@ -9,6 +9,7 @@ import (
 	tockenmanager "balancer/internal/service/tocken-manager"
 )
 
+// я бы это удалил, сервис сервисов не нужен
 type Service struct {
 	interfaces.PoolService
 	interfaces.TockenService

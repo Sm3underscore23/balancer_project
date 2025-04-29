@@ -7,7 +7,7 @@ import (
 )
 
 func (s *limitsManagerService) UpdateUserLimits(ctx context.Context, clientLimits *model.UserLimits) error {
-	log.Println("1")
+	log.Println("1") // убрать
 	isExists, err := s.repo.IsClientExists(ctx, clientLimits.ClientId)
 	if err != nil {
 		return err

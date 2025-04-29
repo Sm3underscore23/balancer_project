@@ -1,13 +1,15 @@
 package api
 
 import (
-	"balancer/internal/model"
 	"encoding/json"
 	"net/http"
+
+	"balancer/internal/model"
 )
 
-func (h *Handler) LimitsManager(w http.ResponseWriter, r *http.Request) {
-	if err := model.ErrMethodNotAllowed; r.Method != http.MethodPost {
+func (h *Handler) UpdateLimits(w http.ResponseWriter, r *http.Request) { // переименовать // вынести в два хендлера отделных
+	if r.Method != http.MethodPost {
+		err := model.ErrMethodNotAllowed
 		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
 			http.Error(w, err.Error(), model.ErrWithStatus[err])
 			return
@@ -24,9 +26,9 @@ func (h *Handler) LimitsManager(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	r.Body.Close()
 
 	err = h.srv.UpdateUserLimits(r.Context(), &userLimits)
-
 	if err != nil {
 		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
 			http.Error(w, err.Error(), model.ErrWithStatus[err])
@@ -35,5 +37,5 @@ func (h *Handler) LimitsManager(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusAccepted) // status
 }

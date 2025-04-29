@@ -43,7 +43,7 @@ func main() {
 
 	srv := service.NewService(&bcknPool, db, mainConfig.GetDefoulLimits())
 
-	t := time.NewTicker(time.Second * time.Duration(mainConfig.TickerRate))
+	t := time.NewTicker(time.Second /*вынести в конфиг*/ * time.Duration(mainConfig.TickerRate))
 
 	go func() {
 		if err := srv.CheckerWithTicker(ctx, t); err != nil {
@@ -55,7 +55,8 @@ func main() {
 
 	http.HandleFunc("/", h.Proxy)
 
-	http.HandleFunc("/clients", h.LimitsManager)
+	http.HandleFunc("/limits/add", h.LimitsManager) // можно задать метод
+	http.HandleFunc("/limits/add", h.LimitsManager) // можно задать метод
 
 	if err := http.ListenAndServe(mainConfig.GetServerAddress(), nil); err != nil {
 		log.Fatalf("failed listening and serving: %s", err)

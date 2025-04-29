@@ -1,8 +1,9 @@
 package poolservice
 
 import (
-	"balancer/internal/model"
 	"context"
+
+	"balancer/internal/model"
 )
 
 func (p *poolService) BalanceStrategyRoundRobin(ctx context.Context) (*model.BackendServer, error) {

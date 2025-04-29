@@ -1,9 +1,10 @@
 package tockenmanager
 
 import (
-	"balancer/internal/model"
 	"context"
 	"time"
+
+	"balancer/internal/model"
 )
 
 func newTokenBucket(maxTokens float64, refillRate float64) *model.TokenBucket {
@@ -16,42 +17,50 @@ func newTokenBucket(maxTokens float64, refillRate float64) *model.TokenBucket {
 }
 
 func (s *tockenService) RequestFromUser(ctx context.Context, clientId string) error {
+	// mutex
 	userTb, ok := s.cache[clientId]
 	if !ok {
-		isExists, err := s.db.IsClientExists(ctx, clientId)
+		userTb.Mu.Lock()
+		defer userTb.Mu.Unlock()
+
+		select {
+		case <-userTb.TokensChan:
+			return nil
+		default:
+			return model.ErrRateLimit
+		}
+
+	}
+	isExists, err := s.db.IsClientExists(ctx, clientId)
+	if err != nil {
+		return err
+	}
+
+	if isExists {
+		userLimit, err := s.db.GetUserLimits(ctx, clientId)
 		if err != nil {
 			return err
 		}
 
-		if isExists {
-			userLimit, err := s.db.GetUserLimits(ctx, clientId)
-			if err != nil {
-				return err
-			}
+		tb := model.ConverUserLimitstoTB(userLimit)
 
-			tb := model.ConverUserLimitstoTB(userLimit)
-
-			s.cache[clientId] = tb
-			userTb = tb
-		}
-
-		if !isExists {
-			tb := newTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
-			_, err := s.db.CreateUserLimits(ctx, model.ConverTBtoUserLimits(clientId, tb))
-
-			if err != nil {
-				return err
-			}
-
-			s.cache[clientId] = tb
-
-			userTb = tb
-		}
+		s.cache[clientId] = tb
+		userTb = tb
+		return nil
 	}
 
-	userTb.Mu.Lock()
-	defer userTb.Mu.Unlock()
+	tb := newTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
+	_, err = s.db.CreateUserLimits(ctx, model.ConverTBtoUserLimits(clientId, tb))
 
+	if err != nil {
+		return err
+	}
+
+	s.cache[clientId] = tb
+
+	userTb = tb
+	return nil
+	// я бы убрал рефилл здесь, пусть будет только по тикеру
 	refill(userTb)
 	if userTb.Tokens > 0 {
 		userTb.Tokens -= 1

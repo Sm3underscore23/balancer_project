@@ -1,9 +1,11 @@
 package userratelimits
 
 import (
+	"context"
+	"errors"
+
 	"balancer/internal/model"
 	"balancer/internal/repository"
-	"context"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
@@ -11,7 +13,7 @@ import (
 )
 
 const (
-	tableName = "clients_limits"
+	clientsTableName = "clients_limits"
 
 	clientIdColumn   = "client_id"
 	capacityColumn   = "capacity"
@@ -27,7 +29,7 @@ func NewUserRateLimitsRepo(db *pgxpool.Pool) repository.Repository {
 }
 
 func (r *repo) CreateUserLimits(ctx context.Context, info *model.UserLimits) (string, error) {
-	builder := sq.Insert(tableName).
+	builder := sq.Insert(clientsTableName).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
 			clientIdColumn,
@@ -40,7 +42,7 @@ func (r *repo) CreateUserLimits(ctx context.Context, info *model.UserLimits) (st
 	).
 		Suffix("RETURNING client_id")
 
-	query, args, err := builder.ToSql()
+	query, args := builder.MustSql()
 	if err != nil {
 		return "", model.ErrDbQuery
 	}
@@ -60,7 +62,7 @@ func (r *repo) GetUserLimits(ctx context.Context, clientId string) (model.UserLi
 		capacityColumn,
 		ratePerSecColumn,
 	).
-		From(tableName).
+		From(clientsTableName).
 		Where(sq.Eq{clientIdColumn: clientId}).
 		PlaceholderFormat(sq.Dollar).
 		Limit(1)
@@ -86,7 +88,7 @@ func (r *repo) GetUserLimits(ctx context.Context, clientId string) (model.UserLi
 
 func (r *repo) IsClientExists(ctx context.Context, userId string) (bool, error) {
 	builder := sq.Select(clientIdColumn).PlaceholderFormat(sq.Dollar).
-		From(tableName).
+		From(clientsTableName).
 		Where(sq.Eq{clientIdColumn: userId})
 
 	query, args, err := builder.ToSql()
@@ -96,7 +98,7 @@ func (r *repo) IsClientExists(ctx context.Context, userId string) (bool, error) 
 
 	var id string
 	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
 	if err != nil {
@@ -107,7 +109,7 @@ func (r *repo) IsClientExists(ctx context.Context, userId string) (bool, error) 
 }
 
 func (r *repo) UpdateUserLimits(ctx context.Context, updateData *model.UserLimits) error {
-	builder := sq.Update(tableName).
+	builder := sq.Update(clientsTableName).
 		SetMap(map[string]interface{}{
 			capacityColumn:   updateData.Capacity,
 			ratePerSecColumn: updateData.RatePerSec,

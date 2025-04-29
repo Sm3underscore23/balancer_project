@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/jackc/pgx/v5 v5.7.4
+	golang.org/x/time v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

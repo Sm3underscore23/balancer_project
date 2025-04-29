@@ -1,11 +1,12 @@
 package repository
 
 import (
-	"balancer/internal/model"
 	"context"
+
+	"balancer/internal/model"
 )
 
-type Repository interface {
+type LimitsRepository interface {
 	CreateUserLimits(ctx context.Context, info *model.UserLimits) (string, error)
 	GetUserLimits(ctx context.Context, clientId string) (model.UserLimits, error)
 	IsClientExists(ctx context.Context, userId string) (bool, error)

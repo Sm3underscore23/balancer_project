@@ -1,12 +1,13 @@
 package interfaces
 
 import (
-	"balancer/internal/model"
 	"context"
 	"time"
+
+	"balancer/internal/model"
 )
 
-type TockenService interface {
+type TockenService interface { // Token
 	RequestFromUser(ctx context.Context, ip string) error
 }
 

@@ -14,7 +14,7 @@ type defoultLimits struct {
 	RatePerSec float64 `yaml:"rate_per_sec"`
 }
 
-type backendConfig struct {
+type BackendConfig struct {
 	BackendURL string `yaml:"backend_url"`
 	Config     struct {
 		Health struct {
@@ -39,7 +39,7 @@ type dbConfig struct {
 }
 
 type mainConfig struct {
-	TickerRate    uint64          `yaml:"ticker_rate_inseconds"`
+	TickerRateSec uint64          `yaml:"ticker_rate_sec"`
 	DefoultLimits defoultLimits   `yaml:"defoult_limits"`
 	BackendList   []backendConfig `yaml:"backend_list"`
 	Server        serverConfig    `yaml:"server"`
@@ -62,10 +62,6 @@ func InitMainConfig(configPath string) (mainConfig, error) {
 	return cfg, nil
 }
 
-func (cfg *mainConfig) GetTickerRate() uint64 {
-	return cfg.TickerRate
-}
-
 func (cfg *mainConfig) GetDefoulLimits() *model.DefoultUserLimits {
 	return &model.DefoultUserLimits{
 		Capacity:   cfg.DefoultLimits.Capacity,
@@ -74,21 +70,7 @@ func (cfg *mainConfig) GetDefoulLimits() *model.DefoultUserLimits {
 }
 
 func (cfg *mainConfig) InitBackendList() []*model.BackendServer {
-	backendList := make([]*model.BackendServer, len(cfg.BackendList))
-	for i, b := range cfg.BackendList {
-		if b.Config.Health.URL == "" {
-			b.Config.Health.URL = "/health"
-		}
-		if b.Config.Health.Method == "" {
-			b.Config.Health.Method = "GET"
-		}
-		backendList[i] = &model.BackendServer{
-			BckndUrl: b.BackendURL,
-			Method:   b.Config.Health.Method,
-			HelthUrl: b.BackendURL + b.Config.Health.URL,
-		}
-	}
-	return backendList
+
 }
 
 func (cfg *mainConfig) GetServerAddress() string {

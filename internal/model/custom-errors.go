@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -12,7 +13,7 @@ type ErrorResponse struct {
 var (
 	ErrCreateProxy = fmt.Errorf("create nil proxy")
 
-	ErrObjectNotExists  = fmt.Errorf("no user object")
+	ErrObjectNotExists  = fmt.Errorf("no user object") // что за объект?
 	ErrMethodNotAllowed = fmt.Errorf("method not allowed")
 	ErrRateLimit        = fmt.Errorf("rate limit exceeded")
 
@@ -33,3 +34,12 @@ var (
 		ErrNoAvilibleServers: http.StatusServiceUnavailable,
 	}
 )
+
+func getStatusCode(err error) int {
+	for mapError, code := range ErrWithStatus {
+		if errors.Is(err, mapError) {
+			return code
+		}
+	}
+	return http.StatusInternalServerError
+}

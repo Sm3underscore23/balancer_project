@@ -1,8 +1,9 @@
 package api
 
 import (
-	"balancer/internal/model"
 	"net/http"
+
+	"balancer/internal/model"
 )
 
 func getClientID(r *http.Request) string {
@@ -14,14 +15,15 @@ func getClientID(r *http.Request) string {
 }
 
 func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
-	err := h.srv.RequestFromUser(r.Context(), getClientID(r))
+	ctx := r.Context()
+	err := h.srv.RequestFromUser(ctx, getClientID(r))
 	if err != nil {
 		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
-	s, err := h.srv.BalanceStrategyRoundRobin(r.Context())
+	s, err := h.srv.BalanceStrategyRoundRobin(ctx)
 	if err != nil {
 		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
