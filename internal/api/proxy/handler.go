@@ -1,10 +1,11 @@
 package api
 
 import (
-	"balancer/internal/model"
-	"balancer/internal/service"
 	"encoding/json"
 	"net/http"
+
+	"balancer/internal/model"
+	"balancer/internal/service"
 )
 
 type Handler struct {
@@ -27,7 +28,7 @@ func writeJSONError(w http.ResponseWriter, statusCode int, message string) error
 
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		return model.ErrWriteMessage
+		return model.ErrWriteMessage // просто залогировать, возвращать ошибку не нужно
 	}
 
 	return nil

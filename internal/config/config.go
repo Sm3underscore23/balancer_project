@@ -14,7 +14,7 @@ type defaultLimits struct {
 	RatePerSec float64 `yaml:"rate_per_sec"`
 }
 
-type backendConfig struct {
+type BackendConfig struct {
 	BackendURL string `yaml:"backend_url"`
 	Config     struct {
 		Health struct {

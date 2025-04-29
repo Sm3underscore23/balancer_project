@@ -1,15 +1,20 @@
 package poolservice
 
 import (
+	"balancer/internal/model"
 	"context"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"sync"
 	"time"
 )
 
 func (p *poolService) CheckerWithTicker(ctx context.Context, t *time.Ticker) error {
-	p.check(ctx)
+	if err := p.checkAndInit(ctx); err != nil {
+		return err
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -20,28 +25,45 @@ func (p *poolService) CheckerWithTicker(ctx context.Context, t *time.Ticker) err
 	}
 }
 
+func (p *poolService) checkAndInit(ctx context.Context) error {
+	for i, b := range p.pool.Pool {
+		urlB, err := url.Parse(b.BckndUrl)
+		if err != nil {
+			return err
+		}
+
+		prx := httputil.NewSingleHostReverseProxy(urlB)
+
+		// не нил
+		// if prx == nil {
+		// 	return model.ErrCreateProxy
+		// }
+		p.pool.Pool[i].Prx = prx
+	}
+
+	p.check(ctx)
+	return nil
+}
+
 func (p *poolService) check(ctx context.Context) {
 	wg := sync.WaitGroup{}
-	for _, b := range p.Pool {
+	for _, b := range p.pool.Pool {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
 			req, err := http.NewRequestWithContext(ctx, b.Method, b.HelthUrl, nil)
 			if err != nil {
-				log.Printf("failed to create request for %s: %v", b.HelthUrl, err)
-				if b.Load() {
-					b.Set(false)
-					log.Printf("%s %s status changed to false", b.Method, b.HelthUrl)
-				}
+				log.Printf("Error creating request for %s: %v", b.HelthUrl, err)
 				return
 			}
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
-				if b.Load() {
-					b.Set(false)
-					log.Printf("%s %s status changed to false", b.Method, b.HelthUrl)
+				// залогировать ошибку, что конкретно случилось
+				if b.IsOnline.Load() {
+					b.IsOnline.Store(false)
+					log.Printf("%s %s status changed to %v", b.Method, b.HelthUrl, status)
 				}
 				return
 			}
@@ -49,10 +71,11 @@ func (p *poolService) check(ctx context.Context) {
 			defer resp.Body.Close()
 
 			status := resp.StatusCode == 200
-			if b.Load() != status {
-				b.Set(status)
+			if b.IsOnline.Load() != status {
+				b.IsOnline.Store(status)
 				log.Printf("%s %s status changed to %v", b.Method, b.HelthUrl, status)
 			}
+
 		}()
 	}
 	wg.Wait()
