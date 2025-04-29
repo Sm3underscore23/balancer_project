@@ -52,7 +52,7 @@ func (s *tockenService) RequestFromUser(ctx context.Context, clientId string) er
 	userTb.Mu.Lock()
 	defer userTb.Mu.Unlock()
 
-	userTb.Refill()
+	refill(userTb)
 	if userTb.Tokens > 0 {
 		userTb.Tokens -= 1
 		return nil

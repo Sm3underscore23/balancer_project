@@ -13,17 +13,6 @@ type TokenBucket struct {
 	LastRefillTime time.Time
 }
 
-func (tb *TokenBucket) Refill() {
-	now := time.Now()
-	elapsed := now.Sub(tb.LastRefillTime).Seconds()
-
-	tb.Tokens += elapsed * tb.RefillRate
-	if tb.Tokens > tb.MaxTokens {
-		tb.Tokens = tb.MaxTokens
-	}
-	tb.LastRefillTime = now
-}
-
 func ConverUserLimitstoTB(userLimits UserLimits) *TokenBucket {
 	return &TokenBucket{
 		Tokens:         userLimits.Capacity,

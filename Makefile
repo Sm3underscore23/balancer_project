@@ -27,7 +27,7 @@ local-migration-down:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) postgres $(LOCAL_MIGRATION_DSN) down -v
 
 app-build-and-run:
-	sudo docker buildx build --platform linux/amd64 -t auth-service:v0.1 .
+	sudo docker buildx build --platform linux/amd64 -t balancer:v0.1 .
 	sudo docker run -d --rm -p 8080:8080 auth-service:v0.1
 
 fast-start:
@@ -35,7 +35,7 @@ fast-start:
 	sudo docker compose ps
 	until sudo docker compose ps | grep "healthy"; do sleep 1; done
 	make local-migration-up
-	go run cmd/server/main.go
+	go run cmd/main.go
 
 force-stop:
 	sudo docker stop db
