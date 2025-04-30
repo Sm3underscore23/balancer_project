@@ -11,8 +11,9 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	resp := &TestRespose{
-		Method: r.Method,
-		Uri:    r.RequestURI,
+		ServerAdd: hostPort,
+		Method:    r.Method,
+		Uri:       r.RequestURI,
 	}
 
 	buf := new(bytes.Buffer)

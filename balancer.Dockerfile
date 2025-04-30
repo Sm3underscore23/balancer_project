@@ -11,4 +11,4 @@ FROM alpine:3.21
 WORKDIR /root/
 COPY --from=builder /app/source/bin/balancer .
 
-CMD ["./balancer", "config-path=./config/config.yaml"]
+CMD ["./balancer", "-config-path=./config/config.yaml"]

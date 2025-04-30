@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 var hostPort string
@@ -16,7 +17,13 @@ func main() {
 	flag.Parse()
 
 	if hostPort == "" {
-		log.Fatalf("failed to load port and host: empty")
+		hostPort = os.Getenv("HOST_PORT")
+	}
+
+	log.Println(hostPort)
+
+	if hostPort == "" {
+		log.Fatalf("failed to get host and port: empty")
 	}
 
 	http.HandleFunc("/", handler)

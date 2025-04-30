@@ -7,7 +7,8 @@ type ErrorResponse struct {
 }
 
 type TestRespose struct {
-	Method string          `json:"http_method"`
-	Uri    string          `json:"request_uri"`
-	Data   json.RawMessage `json:"your_message"`
+	ServerAdd string          `json:"server_address"`
+	Method    string          `json:"http_method"`
+	Uri       string          `json:"request_uri"`
+	Data      json.RawMessage `json:"your_message"`
 }

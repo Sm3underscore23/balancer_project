@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres
+    ports:
+      - ${PG_PORT}:5432
+    environment:
+      - POSTGRES_DB=${PG_DATABASE_NAME}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+    container_name: db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DATABASE_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - my-network
+
+  balancer:
+    image: balancer:v0.1
+    ports:
+      - "8080:8080"
+    container_name: balancer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - my-network
+    volumes:
+      - "./config/fullsetup/config.yaml:/root/config/config.yaml"
+    
+  backend1:
+    image: test-backend:v0.1
+    ports:
+      - "8081:8081"
+    environment:
+      - HOST_PORT=0.0.0.0:8081
+    container_name: backend1
+    restart: unless-stopped
+    networks:
+      - my-network
+  
+  backend2:
+    image: test-backend:v0.1
+    ports:
+      - "8082:8082"
+    environment:
+      - HOST_PORT=0.0.0.0:8082
+    container_name: backend2
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  backend3:
+    image: test-backend:v0.1
+    ports:
+      - "8083:8083"
+    environment:
+      - HOST_PORT=0.0.0.0:8083
+    container_name: backend3
+    restart: unless-stopped
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge

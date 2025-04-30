@@ -1,8 +1,5 @@
 include .env
 
-LOCAL_PROTO_SRC_DIR := "$(CURDIR)"/api/$(PROTO_FILE_VERSION)
-LOCAL_PROTO_DST_DIR  = "$(CURDIR)"/pkg/$(PROTO_FILE_VERSION)
-
 LOCAL_BIN := "$(CURDIR)"/bin
 LOCAL_MIGRATION_DIR := $(MIGRATION_DIR)
 LOCAL_MIGRATION_DSN := "host=localhost port=$(PG_PORT) dbname=$(PG_DATABASE_NAME) user=$(PG_USER) password=$(PG_PASSWORD)"
@@ -10,21 +7,35 @@ LOCAL_MIGRATION_DSN := "host=localhost port=$(PG_PORT) dbname=$(PG_DATABASE_NAME
 install-goose:
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.24.2
 
-local-migration-create:
+migration-create:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) create create_tables sql
 
-local-migration-status:
+migration-status:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) postgres $(LOCAL_MIGRATION_DSN) status -v
 
-local-migration-up:
+migration-up:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) postgres $(LOCAL_MIGRATION_DSN) up -v
 
-local-migration-down:
+migration-down:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) postgres $(LOCAL_MIGRATION_DSN) down -v
 
-app-build-and-run:
-	sudo docker buildx build --platform linux/amd64 -t balancer:v0.1 .
-	sudo docker run -d --rm -p 8080:8080 auth-service:v0.1
+build-balancer:
+	sudo docker buildx build --platform linux/amd64 -t balancer:v0.1 -f ./balancer.Dockerfile .
+
+build-test-backend:
+	sudo docker buildx build --platform linux/amd64 -t test-backend:v0.1 -f ./test-backend.Dockerfile .
+
+db-up:
+	sudo docker compose -f db.docker-compose.yaml up
+
+db-down:
+	sudo docker compose -f db.docker-compose.yaml down -v
+
+fullsetup-up:
+	sudo docker compose -f fullsetup.docker-compose.yaml up
+
+fullsetup-down:
+	sudo docker compose -f fullsetup.docker-compose.yaml down -v
 
 fast-start:
 	sudo docker compose up -d
