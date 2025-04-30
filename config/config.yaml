@@ -1,0 +1,31 @@
+server:
+  host: 0.0.0.0
+  port: 8080
+
+db:
+  db_host: postgres 
+  db_port: 5432
+  db_name: user_db
+  db_user: admin
+  db_password: 1234
+  db_sslmode: disable
+
+
+ticker_rate_sec: 5
+
+defoult_limits:
+  capasity: 3
+  rate_per_sec: 0.01
+
+backend_list:
+  - backend_url: http://172.17.0.1:8082
+    config:
+      health:
+        method: HEAD
+        url: /
+
+  - backend_url: http://172.17.0.1:8083
+    config:
+      health:
+        method: HEAD
+        url: /
