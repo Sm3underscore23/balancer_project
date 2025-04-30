@@ -13,6 +13,6 @@ type poolService struct {
 	Pool    []*model.BackendServer
 }
 
-func NewPoolService(pool *model.BackendPool) interfaces.PoolService {
-	return &poolService{pool: pool}
+func NewPoolService(pool []*model.BackendServer) interfaces.PoolService {
+	return &poolService{Pool: pool}
 }

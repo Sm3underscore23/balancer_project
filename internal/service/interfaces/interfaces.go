@@ -7,16 +7,19 @@ import (
 	"balancer/internal/model"
 )
 
-type TockenService interface { // Token
+type TokenService interface {
 	RequestFromUser(ctx context.Context, ip string) error
+	StartRefillWorker(ctx context.Context)
 }
 
 type PoolService interface {
 	CheckerWithTicker(ctx context.Context, t *time.Ticker) error
-
 	BalanceStrategyRoundRobin(ctx context.Context) (*model.BackendServer, error)
 }
 
 type LimitsManagerService interface {
-	UpdateUserLimits(ctx context.Context, clientLimits *model.UserLimits) error
+	CreateClientLimits(ctx context.Context, clientLimits *model.ClientLimits) error
+	GetClientLimits(ctx context.Context, clientId string) (model.ClientLimits, error)
+	UpdateClientLimits(ctx context.Context, clientLimits *model.ClientLimits) error
+	DeleteClientLimits(ctx context.Context, clientId string) error
 }

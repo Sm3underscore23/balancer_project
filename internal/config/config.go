@@ -9,12 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type defoultLimits struct {
-	Capacity   float64 `yaml:"capasity"`
+type defaultLimits struct {
+	Capacity   float64  `yaml:"capasity"`
 	RatePerSec float64 `yaml:"rate_per_sec"`
 }
 
-type BackendConfig struct {
+type backendConfig struct {
 	BackendURL string `yaml:"backend_url"`
 	Config     struct {
 		Health struct {
@@ -40,8 +40,8 @@ type dbConfig struct {
 
 type mainConfig struct {
 	TickerRateSec uint64          `yaml:"ticker_rate_sec"`
-	DefoultLimits defoultLimits   `yaml:"defoult_limits"`
-	BackendList   []backendConfig `yaml:"backend_list"`
+	DefaultLimits defaultLimits   `yaml:"defoult_limits"`
+	BackendConfig []backendConfig `yaml:"backend_list"`
 	Server        serverConfig    `yaml:"server"`
 	DbConfig      dbConfig        `yaml:"db"`
 }
@@ -62,22 +62,34 @@ func InitMainConfig(configPath string) (mainConfig, error) {
 	return cfg, nil
 }
 
-func (cfg *mainConfig) GetDefoulLimits() *model.DefoultUserLimits {
-	return &model.DefoultUserLimits{
-		Capacity:   cfg.DefoultLimits.Capacity,
-		RatePerSec: cfg.DefoultLimits.RatePerSec,
+func (cfg *mainConfig) LoadTickerRateSec() uint64 {
+	return cfg.TickerRateSec
+}
+
+func (cfg *mainConfig) LoadDefaultLimits() *model.DefaultClientLimits {
+	return &model.DefaultClientLimits{
+		Capacity:   cfg.DefaultLimits.Capacity,
+		RatePerSec: cfg.DefaultLimits.RatePerSec,
 	}
 }
 
-func (cfg *mainConfig) InitBackendList() []*model.BackendServer {
-
+func (cfg *mainConfig) LoadBackendComfig() []*model.BackendServerSettings {
+	settings := make([]*model.BackendServerSettings, 0, len(cfg.BackendConfig))
+	for _, b := range cfg.BackendConfig {
+		settings = append(settings, &model.BackendServerSettings{
+			BckndUrl: b.BackendURL,
+			Method:   b.Config.Health.Method,
+			HelthUrl: b.Config.Health.URL,
+		})
+	}
+	return settings
 }
 
-func (cfg *mainConfig) GetServerAddress() string {
+func (cfg *mainConfig) LoadServerAddress() string {
 	return net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)
 }
 
-func (cfg *mainConfig) DbConfigLoad() string {
+func (cfg *mainConfig) LoadDbConfig() string {
 
 	return fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",

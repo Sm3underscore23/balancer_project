@@ -7,10 +7,6 @@ LOCAL_BIN := "$(CURDIR)"/bin
 LOCAL_MIGRATION_DIR := $(MIGRATION_DIR)
 LOCAL_MIGRATION_DSN := "host=localhost port=$(PG_PORT) dbname=$(PG_DATABASE_NAME) user=$(PG_USER) password=$(PG_PASSWORD)"
 
-proto-generator:
-	protoc -I="./api/$(PROTO_FILE_VERSION)" --go_out=paths=source_relative:"./pkg/$(PROTO_FILE_VERSION)" ./api/$(PROTO_FILE_VERSION)/user.proto
-	protoc -I="./api/$(PROTO_FILE_VERSION)" --go-grpc_out=paths=source_relative:"./pkg/$(PROTO_FILE_VERSION)" ./api/$(PROTO_FILE_VERSION)/user.proto
-
 install-goose:
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.24.2
 
@@ -35,7 +31,7 @@ fast-start:
 	sudo docker compose ps
 	until sudo docker compose ps | grep "healthy"; do sleep 1; done
 	make local-migration-up
-	go run cmd/main.go
+	go run cmd/main.go -config_path="config/config.yaml"
 
 force-stop:
 	sudo docker stop db

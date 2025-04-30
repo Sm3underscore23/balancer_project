@@ -18,16 +18,12 @@ func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	err := h.srv.RequestFromUser(ctx, getClientID(r))
 	if err != nil {
-		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		writeJSONError(w, model.GetStatusCode(err), err.Error())
 		return
 	}
 	s, err := h.srv.BalanceStrategyRoundRobin(ctx)
 	if err != nil {
-		if err := writeJSONError(w, model.ErrWithStatus[err], err.Error()); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		writeJSONError(w, model.GetStatusCode(err), err.Error())
 		return
 	}
 	s.Prx.ServeHTTP(w, r)

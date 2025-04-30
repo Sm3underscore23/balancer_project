@@ -7,14 +7,16 @@ import (
 )
 
 func (p *poolService) BalanceStrategyRoundRobin(ctx context.Context) (*model.BackendServer, error) {
-
-	l := uint64(len(p.pool.Pool))
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	
+	l := uint64(len(p.Pool))
 
 	for i := range l {
-		idx := (p.pool.Current + i) % l
-		if p.pool.Pool[idx].IsOnline.Load() {
-			p.pool.Current = uint64(idx) + 1
-			return p.pool.Pool[idx], nil
+		idx := (p.current + i) % l
+		if p.Pool[idx].IsOnline.Load() {
+			p.current = (uint64(idx) + 1)
+			return p.Pool[idx], nil
 		}
 	}
 

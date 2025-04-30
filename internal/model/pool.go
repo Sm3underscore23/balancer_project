@@ -2,35 +2,48 @@ package model
 
 import (
 	"net/http/httputil"
-	"sync"
+	"net/url"
 	"sync/atomic"
 )
 
-type BackendServer struct {
-	IsOnline atomic.Bool
-	Prx      *httputil.ReverseProxy
+type BackendServerSettings struct {
 	BckndUrl string
 	Method   string
 	HelthUrl string
 }
 
-type BackendPool struct {
+type BackendServer struct {
+	IsOnline atomic.Bool
+	Prx      *httputil.ReverseProxy
+	BackendServerSettings
 }
 
-func NewBackendPool(backend) *BackendPool {
-	backendList := make([]*model.BackendServer, len(cfg.BackendList))
-	for i, b := range cfg.BackendList {
-		if b.Config.Health.URL == "" {
-			b.Config.Health.URL = "/health"
+func NewBackendPool(settings []*BackendServerSettings) ([]*BackendServer, error) {
+	backendList := make([]*BackendServer, len(settings))
+	for i, b := range settings {
+		if b.HelthUrl == "" {
+			b.HelthUrl = "/health"
 		}
-		if b.Config.Health.Method == "" {
-			b.Config.Health.Method = "GET"
+		if b.Method == "" {
+			b.Method = "GET"
 		}
-		backendList[i] = &model.BackendServer{
-			BckndUrl: b.BackendURL,
-			Method:   b.Config.Health.Method,
-			HelthUrl: b.BackendURL + b.Config.Health.URL,
+
+		urlB, err := url.Parse(b.BckndUrl)
+		if err != nil {
+			return nil, err
+		}
+
+		prx := httputil.NewSingleHostReverseProxy(urlB)
+
+		backendList[i] = &BackendServer{
+			BackendServerSettings: BackendServerSettings{
+				BckndUrl: b.BckndUrl,
+				Method:   b.Method,
+				HelthUrl: b.BckndUrl + b.HelthUrl,
+			},
+			Prx: prx,
 		}
 	}
-	return &BackendPool{Pool: backendList}
+
+	return backendList, nil
 }

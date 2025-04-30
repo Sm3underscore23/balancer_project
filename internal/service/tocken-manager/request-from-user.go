@@ -2,30 +2,26 @@ package tockenmanager
 
 import (
 	"context"
-	"time"
 
 	"balancer/internal/model"
 )
 
-func newTokenBucket(maxTokens float64, refillRate float64) *model.TokenBucket {
-	return &model.TokenBucket{
-		Tokens:         maxTokens,
-		MaxTokens:      maxTokens,
-		RefillRate:     refillRate,
-		LastRefillTime: time.Now(),
-	}
-}
-
-func (s *tockenService) RequestFromUser(ctx context.Context, clientId string) error {
-	// mutex
-	userTb, ok := s.cache[clientId]
-	if !ok {
-		userTb.Mu.Lock()
-		defer userTb.Mu.Unlock()
-
-		select {
-		case <-userTb.TokensChan:
+func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) error {
+	userTb, ok := s.cache.Get(clientId)
+	if ok {
+		// select {
+		// case <-userTb.TokensChan:
+		// 	userTb.UseToken()
+		// 	log.Println(userTb.Token()) <- уходит в минус
+		// 	return nil
+		// default:
+		// 	return model.ErrRateLimit
+		// }
+		switch {
+		case userTb.Token() >= 1:
+			userTb.UseToken()
 			return nil
+
 		default:
 			return model.ErrRateLimit
 		}
@@ -37,34 +33,31 @@ func (s *tockenService) RequestFromUser(ctx context.Context, clientId string) er
 	}
 
 	if isExists {
-		userLimit, err := s.db.GetUserLimits(ctx, clientId)
+		clientLimit, err := s.db.GetUserLimits(ctx, clientId)
 		if err != nil {
 			return err
 		}
 
-		tb := model.ConverUserLimitstoTB(userLimit)
+		tb := model.NewTokenBucket(clientLimit.Capacity, clientLimit.RatePerSec)
 
-		s.cache[clientId] = tb
-		userTb = tb
+		s.cache.Set(clientId, tb)
+		tb.UseToken()
 		return nil
 	}
 
-	tb := newTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
-	_, err = s.db.CreateUserLimits(ctx, model.ConverTBtoUserLimits(clientId, tb))
+	tb := model.NewTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
+	err = s.db.CreateUserLimits(ctx, &model.ClientLimits{
+		ClientId:   clientId,
+		Capacity:   tb.MaxTokens,
+		RatePerSec: tb.RefillRate})
 
 	if err != nil {
 		return err
 	}
 
-	s.cache[clientId] = tb
+	s.cache.Set(clientId, tb)
 
-	userTb = tb
+	tb.UseToken()
+
 	return nil
-	// я бы убрал рефилл здесь, пусть будет только по тикеру
-	refill(userTb)
-	if userTb.Tokens > 0 {
-		userTb.Tokens -= 1
-		return nil
-	}
-	return model.ErrRateLimit
 }

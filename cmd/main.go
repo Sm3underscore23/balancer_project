@@ -1,12 +1,14 @@
 package main
 
 import (
-	api "balancer/internal/api/proxy"
+	api "balancer/internal/api/handler"
 	"balancer/internal/config"
 	"balancer/internal/model"
 	userratelimits "balancer/internal/repository/user-rate-limits"
 	"balancer/internal/service"
+	inmemorycache "balancer/internal/service/in-memory-cache"
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"time"
@@ -14,15 +16,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func main() {
-	// fmt.Println("Enter config path:")
-	// in := bufio.NewReader(os.Stdin)
-	// rowConfigPath, err := in.ReadString('\n')
-	// if err != nil {
-	// 	log.Fatalf("failed to read config path: %s", err)
-	// }
-	// strings.TrimSpace(rowConfigPath)
+var configPath string
 
+func init() {
+	flag.StringVar(&configPath, "config_path", "", "config path")
+}
+
+func main() {
+	flag.Parse()
 	mainConfig, err := config.InitMainConfig("config/config.yaml")
 	if err != nil {
 		log.Fatalf("failed config loading: %s", err)
@@ -30,20 +31,25 @@ func main() {
 
 	ctx := context.Background()
 
-	bcknPool := model.BackendPool{
-		Pool: mainConfig.InitBackendList(),
+	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendComfig())
+	if err != nil {
+		log.Fatalf("failed to init backend pool: %s", err)
 	}
 
-	dbPool, err := pgxpool.New(ctx, mainConfig.DbConfigLoad())
+	dbPool, err := pgxpool.New(ctx, mainConfig.LoadDbConfig())
 	if err != nil {
 		log.Fatalf("failed to connect to database: %s", err)
 	}
 
 	db := userratelimits.NewUserRateLimitsRepo(dbPool)
 
-	srv := service.NewService(&bcknPool, db, mainConfig.GetDefoulLimits())
+	cch := inmemorycache.NewInMemoryTokenBucketCache()
 
-	t := time.NewTicker(time.Second /*вынести в конфиг*/ * time.Duration(mainConfig.TickerRate))
+	srv := service.NewService(cch, bcknPool, db, mainConfig.LoadDefaultLimits())
+
+	srv.TokenService.StartRefillWorker(ctx)
+
+	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
 
 	go func() {
 		if err := srv.CheckerWithTicker(ctx, t); err != nil {
@@ -51,14 +57,23 @@ func main() {
 		}
 	}()
 
-	h := api.NewProxyHandler(&bcknPool, srv)
+	h := api.NewProxyHandler(bcknPool, srv)
 
-	http.HandleFunc("/", h.Proxy)
+	m := http.NewServeMux()
 
-	http.HandleFunc("/limits/add", h.LimitsManager) // можно задать метод
-	http.HandleFunc("/limits/add", h.LimitsManager) // можно задать метод
+	m.HandleFunc("/", h.Proxy)
 
-	if err := http.ListenAndServe(mainConfig.GetServerAddress(), nil); err != nil {
+	m.HandleFunc("POST /limits/create", h.CreateLimits)
+
+	m.HandleFunc("GET /limits/get", h.GetLimits)
+
+	m.HandleFunc("PUT /limits/update", h.UpdateLimits)
+
+	m.HandleFunc("DELETE /limits/delete", h.DeleteLimits)
+
+	log.Println(mainConfig.LoadServerAddress())
+
+	if err := http.ListenAndServe(mainConfig.LoadServerAddress(), m); err != nil {
 		log.Fatalf("failed listening and serving: %s", err)
 	}
 }

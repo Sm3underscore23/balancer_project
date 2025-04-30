@@ -13,9 +13,10 @@ type ErrorResponse struct {
 var (
 	ErrCreateProxy = fmt.Errorf("create nil proxy")
 
-	ErrObjectNotExists  = fmt.Errorf("no user object") // что за объект?
-	ErrMethodNotAllowed = fmt.Errorf("method not allowed")
-	ErrRateLimit        = fmt.Errorf("rate limit exceeded")
+	ErrUserNotExists     = fmt.Errorf("user not exists,  please use servise for create")
+	ErrUserAlreadyExists = fmt.Errorf("user already exists, please use servise for update")
+	ErrMethodNotAllowed  = fmt.Errorf("method not allowed")
+	ErrRateLimit         = fmt.Errorf("rate limit exceeded")
 
 	ErrDbBuilder         = fmt.Errorf("failed to build query error")
 	ErrDbScan            = fmt.Errorf("failed to scan query")
@@ -24,7 +25,8 @@ var (
 	ErrNoAvilibleServers = fmt.Errorf("no healthy backends available")
 
 	ErrWithStatus = map[error]int{
-		ErrObjectNotExists:   http.StatusBadRequest,
+		ErrUserNotExists:     http.StatusBadRequest,
+		ErrUserAlreadyExists: http.StatusBadRequest,
 		ErrMethodNotAllowed:  http.StatusMethodNotAllowed,
 		ErrRateLimit:         http.StatusTooManyRequests,
 		ErrDbBuilder:         http.StatusInternalServerError,
@@ -35,7 +37,7 @@ var (
 	}
 )
 
-func getStatusCode(err error) int {
+func GetStatusCode(err error) int {
 	for mapError, code := range ErrWithStatus {
 		if errors.Is(err, mapError) {
 			return code
