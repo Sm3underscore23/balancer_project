@@ -32,7 +32,7 @@ services:
       - "./config/fullsetup/config.yaml:/root/config/config.yaml"
     
   backend1:
-    image: test-backend:v0.1
+    image: backend-test:v0.1
     ports:
       - "8081:8081"
     environment:
@@ -43,7 +43,7 @@ services:
       - my-network
   
   backend2:
-    image: test-backend:v0.1
+    image: backend-test:v0.1
     ports:
       - "8082:8082"
     environment:
@@ -54,7 +54,7 @@ services:
       - my-network
 
   backend3:
-    image: test-backend:v0.1
+    image: backend-test:v0.1
     ports:
       - "8083:8083"
     environment:
