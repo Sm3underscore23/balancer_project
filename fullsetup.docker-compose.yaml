@@ -18,7 +18,7 @@ services:
       - my-network
 
   balancer:
-    image: balancer:v0.1
+    image: s3m23/balancer:v0.1
     ports:
       - "8080:8080"
     container_name: balancer
