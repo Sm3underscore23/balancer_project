@@ -16,7 +16,7 @@ Balancer project - это простой балансировщик нагруз
 ## Технологии
 ### Основные
 - [Go:v1.23.2](https://github.com/golang/go)
-- [PostgreSQL:v17.2](https://github.com/postgres/postgres)
+- [PostgreSQL:v17.4](https://github.com/postgres/postgres)
 - [Docker:v28.0.4](https://github.com/docker)
 - [Docker compose:v2.34.0](https://github.com/docker/compose)
 
@@ -29,73 +29,41 @@ Balancer project - это простой балансировщик нагруз
 
 ## Начало работы
 
-**Перед началом работы сверьтесь с актуальными версиями технологий**
-
-
-### Запуск проекта через редактор кода
-Для запуска проекта через редактор кода склонируйте репозиторий:
-
-HTTP
-```sh
-git clone https://github.com/Sm3underscore23/balancer.git
-```
-SSH
-```sh
-git clone git@github.com:Sm3underscore23/balancer.git
-```
-
-Выполните команду
-```sh
-make fast-start
-```
-
-Для завершения работы используйте сочетание клавиш `Ctrl + C` в терминале.
-А также команду:
-```sh
-make force-stop
-```
-
-### Запуск проекта с помощью bin файла
-
-**Создание конфига**
-Создайте или скачайте конфиг(
-
-
-**Запустите сопутствующие инстансы**
-Запустите PostgreSQL с параметрами указанными к конфиге
-
-**Запуск Balancer**
-Скачайте bin файл под свою систему:
-
-| Platform | File |
-|----------------|:----------------:|
-| linux/amd64 | file |
-| windows/amd64 | file |
-| macos/amd64 | file |
-
-**Linux**
-Разархивируйте файл в нужную директорию
-Запустите файл
-```sh
-path_to_balancer/balancer
-```
+**Перед началом работы сверьтесь с актуальными версиями технологий.**
+**Также проверьте наличие конфигов, .env и make файла**
 
 ### Запуск проекта с помощью docker
 Установите docker на свое устройство:
 [Гайд по установке](https://docs.docker.com/engine/install/)
 
-**Запустите сопутствующие инстансы**
-Запустите PostgreSQL с параметрами указанными к конфиге
-
-Выполните команду
+**Установите сопутствующие инстансы**
 ```sh
-docker pull s3m23/balancer
+docker pull postgres:17.4
+```
+```sh
+docker pull s3m23/balancer:v0.1
+```
+```sh
+docker pull s3m23/backend-test:v0.1
 ```
 
-Запустите контейнер:
+Выполните команды для запуска контейнеров
 ```sh
-docker run -d -rm -v "./config/config.yaml:/root/conf
-ig/config.yaml" -p 8080:8080 s3m23/balancer
+make fullsetup-up
+```
+
+Установите goose и выполните миграции
+```sh
+make install-goose
+```
+```sh
+make migration-up
+```
+
+
+Для завершения:
+```sh
+make fullsetup-down
 ```
 
 ---
