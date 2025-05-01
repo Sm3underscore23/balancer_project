@@ -20,19 +20,19 @@ migration-down:
 	$(LOCAL_BIN)/goose -dir $(LOCAL_MIGRATION_DIR) postgres $(LOCAL_MIGRATION_DSN) down -v
 
 build-balancer:
-	sudo docker buildx build --platform linux/amd64 -t balancer:v0.1 -f ./balancer.Dockerfile .
+	docker buildx build --platform linux/amd64 -t balancer:v0.1 -f ./balancer.Dockerfile .
 
 build-backend-test:
-	sudo docker buildx build --platform linux/amd64 -t s3m23/backend-test:v0.1 -f ./backend-test.Dockerfile .
+	docker buildx build --platform linux/amd64 -t backend-test:v0.1 -f ./backend-test.Dockerfile .
 
 db-up:
-	sudo docker compose -f db.docker-compose.yaml up
+	docker compose -f db.docker-compose.yaml up
 
 db-down:
-	sudo docker compose -f db.docker-compose.yaml down -v
+	docker compose -f db.docker-compose.yaml down -v
 
 fullsetup-up:
-	sudo docker compose -f fullsetup.docker-compose.yaml up
+	docker compose -f fullsetup.docker-compose.yaml up
 
 fullsetup-down:
-	sudo docker compose -f fullsetup.docker-compose.yaml down -v
+	docker compose -f fullsetup.docker-compose.yaml down -v
