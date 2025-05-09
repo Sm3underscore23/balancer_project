@@ -8,15 +8,20 @@ import (
 )
 
 func (h *Handler) CreateLimits(w http.ResponseWriter, r *http.Request) {
-	var clientId model.ClientLimits
-	err := json.NewDecoder(r.Body).Decode(&clientId)
+	var clientLimits model.ClientLimits
+	err := json.NewDecoder(r.Body).Decode(&clientLimits)
 	if err != nil {
 		writeJSONError(w, err)
 		return
 	}
 	r.Body.Close()
 
-	err = h.limitsManager.CreateClientLimits(r.Context(), clientId) // убрать указатель
+	if err = clientLimits.ValidateClientLimits(); err != nil {
+		writeJSONError(w, err)
+		return
+	}
+
+	err = h.limitsManager.CreateClientLimits(r.Context(), clientLimits)
 	if err != nil {
 		writeJSONError(w, err)
 		return
@@ -34,6 +39,11 @@ func (h *Handler) GetLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
+	if err := clientId.ValidateClientIdRequest(); err != nil {
+		writeJSONError(w, err)
+		return
+	}
+
 	clientLimits, err := h.limitsManager.GetClientLimits(r.Context(), clientId.ClientId)
 	if err != nil {
 		writeJSONError(w, err)
@@ -46,18 +56,26 @@ func (h *Handler) GetLimits(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "can not encode json", http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) UpdateLimits(w http.ResponseWriter, r *http.Request) {
-	var clientId model.ClientLimits
-	err := json.NewDecoder(r.Body).Decode(&clientId)
+	var clientLimits model.ClientLimits
+	err := json.NewDecoder(r.Body).Decode(&clientLimits)
 	if err != nil {
 		writeJSONError(w, err)
 		return
 	}
 	r.Body.Close()
 
-	err = h.limitsManager.UpdateClientLimits(r.Context(), clientId)
+	err = clientLimits.ValidateClientLimits()
+	if err != nil {
+		writeJSONError(w, err)
+		return
+	}
+
+	err = h.limitsManager.UpdateClientLimits(r.Context(), clientLimits)
 	if err != nil {
 		writeJSONError(w, err)
 		return
@@ -74,6 +92,11 @@ func (h *Handler) DeleteLimits(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body.Close()
+
+	if err := clientId.ValidateClientIdRequest(); err != nil {
+		writeJSONError(w, err)
+		return
+	}
 
 	err = h.limitsManager.DeleteClientLimits(r.Context(), clientId.ClientId)
 	if err != nil {

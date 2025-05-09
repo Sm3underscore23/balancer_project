@@ -26,10 +26,10 @@ build-backend-test:
 	docker buildx build --platform linux/amd64 -t backend-test:v0.1 -f ./backend-test.Dockerfile .
 
 db-up:
-	docker compose -f db.docker-compose.yaml up
+	sudo docker compose -f db.docker-compose.yaml up
 
 db-down:
-	docker compose -f db.docker-compose.yaml down -v
+	sudo docker compose -f db.docker-compose.yaml down -v
 
 fullsetup-up:
 	docker compose -f fullsetup.docker-compose.yaml up
