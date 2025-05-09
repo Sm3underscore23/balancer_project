@@ -6,6 +6,7 @@ import (
 	"balancer/internal/model"
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
 type LimitsRepository interface {
 	CreateUserLimits(ctx context.Context, info model.ClientLimits) error
 	GetUserLimits(ctx context.Context, clientId string) (model.ClientLimits, error)

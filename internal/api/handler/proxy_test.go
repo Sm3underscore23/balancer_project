@@ -86,7 +86,7 @@ func TestProxy(t *testing.T) {
 			expectedBody:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrRateLimit),
 		},
 		{
-			name:             "no av",
+			name:             "no avilible servers",
 			clientId:         "123.4.5.6",
 			isClientIdAPIKey: false,
 			mockToken: func(controller *gomock.Controller) service.TokenService {
@@ -108,6 +108,7 @@ func TestProxy(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
+			// defer req.Body.Close()
 
 			if testCase.isClientIdAPIKey {
 				req.Header.Set("X-API-Key", testCase.clientId)
