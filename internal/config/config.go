@@ -10,7 +10,7 @@ import (
 )
 
 type defaultLimits struct {
-	Capacity   float64  `yaml:"capasity"`
+	Capacity   float64 `yaml:"capacity"`
 	RatePerSec float64 `yaml:"rate_per_sec"`
 }
 
@@ -38,42 +38,42 @@ type dbConfig struct {
 	DbSSL      string `yaml:"db_sslmode"`
 }
 
-type mainConfig struct {
-	TickerRateSec uint64          `yaml:"ticker_rate_sec"`
-	DefaultLimits defaultLimits   `yaml:"defoult_limits"`
-	BackendConfig []backendConfig `yaml:"backend_list"`
-	Server        serverConfig    `yaml:"server"`
-	DbConfig      dbConfig        `yaml:"db"`
+type MainConfig struct {
+	TickerRateSec uint64           `yaml:"ticker_rate_sec"`
+	DefaultLimits defaultLimits    `yaml:"default_limits"`
+	BackendConfig []*backendConfig `yaml:"backend_list"`
+	ServerConfig  serverConfig     `yaml:"server"`
+	DbConfig      dbConfig         `yaml:"db"`
 }
 
-func InitMainConfig(configPath string) (mainConfig, error) {
-	var cfg mainConfig
+func InitMainConfig(configPath string) (MainConfig, error) {
+	var cfg MainConfig
 	if _, err := os.Stat(configPath); err != nil {
-		return mainConfig{}, err
+		return MainConfig{}, model.ErrParseConfig
 	}
 	rowConfig, err := os.ReadFile(configPath)
 	if err != nil {
-		return mainConfig{}, err
+		return MainConfig{}, model.ErrParseConfig
 	}
 	err = yaml.Unmarshal(rowConfig, &cfg)
 	if err != nil {
-		return mainConfig{}, err
+		return MainConfig{}, model.ErrParseConfig
 	}
 	return cfg, nil
 }
 
-func (cfg *mainConfig) LoadTickerRateSec() uint64 {
+func (cfg *MainConfig) LoadTickerRateSec() uint64 {
 	return cfg.TickerRateSec
 }
 
-func (cfg *mainConfig) LoadDefaultLimits() *model.DefaultClientLimits {
+func (cfg *MainConfig) LoadDefaultLimits() *model.DefaultClientLimits { // почистить указатели
 	return &model.DefaultClientLimits{
 		Capacity:   cfg.DefaultLimits.Capacity,
 		RatePerSec: cfg.DefaultLimits.RatePerSec,
 	}
 }
 
-func (cfg *mainConfig) LoadBackendComfig() []*model.BackendServerSettings {
+func (cfg *MainConfig) LoadBackendConfig() []*model.BackendServerSettings {
 	settings := make([]*model.BackendServerSettings, 0, len(cfg.BackendConfig))
 	for _, b := range cfg.BackendConfig {
 		settings = append(settings, &model.BackendServerSettings{
@@ -85,12 +85,11 @@ func (cfg *mainConfig) LoadBackendComfig() []*model.BackendServerSettings {
 	return settings
 }
 
-func (cfg *mainConfig) LoadServerAddress() string {
-	return net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)
+func (cfg *MainConfig) LoadServerAddress() string {
+	return net.JoinHostPort(cfg.ServerConfig.Host, cfg.ServerConfig.Port) // Исправлено: было cfg.Host, cfg.DbHost
 }
 
-func (cfg *mainConfig) LoadDbConfig() string {
-
+func (cfg *MainConfig) LoadDbConfig() string {
 	return fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		cfg.DbConfig.DbHost,

@@ -13,9 +13,17 @@ type BackendServerSettings struct {
 }
 
 type BackendServer struct {
-	IsOnline atomic.Bool
+	isOnline atomic.Bool
 	Prx      *httputil.ReverseProxy
 	BackendServerSettings
+}
+
+func (b *BackendServer) IsOnline() bool {
+	return b.isOnline.Load()
+}
+
+func (b *BackendServer) ChangeHealthStatus(val bool) {
+	b.isOnline.Store(val)
 }
 
 func NewBackendPool(settings []*BackendServerSettings) ([]*BackendServer, error) {

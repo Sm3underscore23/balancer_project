@@ -12,7 +12,10 @@ func (r *repo) DeleteUserLimits(ctx context.Context, clientId string) error {
 
 	query, args := builder.MustSql()
 
-	r.db.QueryRow(ctx, query, args...)
+	_, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -11,6 +11,8 @@ type ErrorResponse struct {
 }
 
 var (
+	ErrParseConfig = fmt.Errorf("failed to parse config")
+
 	ErrCreateProxy = fmt.Errorf("create nil proxy")
 
 	ErrUserNotExists     = fmt.Errorf("user not exists,  please use servise for create")

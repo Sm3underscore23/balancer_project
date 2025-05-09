@@ -5,7 +5,7 @@ import (
 	"context"
 )
 
-func (s *limitsManagerService) UpdateClientLimits(ctx context.Context, clientLimits *model.ClientLimits) error {
+func (s *limitsManagerService) UpdateClientLimits(ctx context.Context, clientLimits model.ClientLimits) error {
 	isExists, err := s.repo.IsClientExists(ctx, clientLimits.ClientId)
 	if err != nil {
 		return err
@@ -21,7 +21,7 @@ func (s *limitsManagerService) UpdateClientLimits(ctx context.Context, clientLim
 	}
 
 	if _, ok := s.cache.Get(clientLimits.ClientId); ok {
-		s.cache.Set(clientLimits.ClientId, model.ConverClientLimitstoTB(*clientLimits))
+		s.cache.Set(clientLimits.ClientId, model.ConverClientLimitstoTB(clientLimits))
 	}
 
 	return nil

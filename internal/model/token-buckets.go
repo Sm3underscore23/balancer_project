@@ -59,11 +59,7 @@ func NewTokenBucket(maxTokens float64, refillRate float64) *TokenBucket {
 		MaxTokens:      maxTokens,
 		RefillRate:     refillRate,
 		LastRefillTime: time.Now(),
-		// TokensChan:     make(chan struct{}, int(maxTokens)),
 	}
-	// for i := 0; i < int(maxTokens); i++ {
-	// 	tb.TokensChan <- struct{}{}
-	// }
 	return tb
 
 }

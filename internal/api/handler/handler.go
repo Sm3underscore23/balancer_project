@@ -10,25 +10,34 @@ import (
 )
 
 type Handler struct {
-	pool []*model.BackendServer
-	srv  *service.Service
+	pool            []*model.BackendServer
+	tokenService    service.TokenService
+	balanceStrategy service.BalanceStrategyService
+	limitsManager   service.LimitsManagerService
 }
 
-func NewProxyHandler(pool []*model.BackendServer, srv *service.Service) *Handler {
+func NewProxyHandler(
+	pool []*model.BackendServer,
+	tokenService service.TokenService,
+	balanceStrategy service.BalanceStrategyService,
+	limitsManager service.LimitsManagerService,
+) *Handler {
 	return &Handler{
-		pool: pool,
-		srv:  srv,
+		pool:            pool,
+		tokenService:    tokenService,
+		balanceStrategy: balanceStrategy,
+		limitsManager:   limitsManager,
 	}
 }
 
-func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
+func writeJSONError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	response := model.ErrorResponse{
-		Message: message,
+		Message: err.Error(),
 	}
 
-	w.WriteHeader(statusCode)
+	w.WriteHeader(model.GetStatusCode(err))
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("failed to write JSONE: %s", err)
+		log.Printf("failed to write JSONE: %s", err)
 	}
 }

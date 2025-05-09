@@ -5,7 +5,7 @@ import (
 	"context"
 )
 
-func (s *limitsManagerService) CreateClientLimits(ctx context.Context, clientLimits *model.ClientLimits) error {
+func (s *limitsManagerService) CreateClientLimits(ctx context.Context, clientLimits model.ClientLimits) error {
 	isExists, err := s.repo.IsClientExists(ctx, clientLimits.ClientId)
 	if err != nil {
 		return err

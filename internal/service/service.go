@@ -1,29 +1,27 @@
 package service
 
 import (
+	"context"
+	"net/http/httputil"
+	"time"
+
 	"balancer/internal/model"
-	"balancer/internal/repository"
-	inmemorycache "balancer/internal/service/in-memory-cache"
-	"balancer/internal/service/interfaces"
-	limitsmanagergo "balancer/internal/service/limits-manager"
-	poolservice "balancer/internal/service/pool-service"
-	tockenmanager "balancer/internal/service/tocken-manager"
 )
 
-type Service struct {
-	interfaces.PoolService
-	interfaces.TokenService
-	interfaces.LimitsManagerService
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+type TokenService interface {
+	RequestFromUser(ctx context.Context, ip string) error
+	StartRefillWorker(ctx context.Context)
 }
 
-func NewService(
-	cache *inmemorycache.InMemoryTokenBucketCache,
-	pool []*model.BackendServer,
-	db repository.LimitsRepository,
-	defaultLimits *model.DefaultClientLimits) *Service {
-	return &Service{
-		PoolService:          poolservice.NewPoolService(pool),
-		TokenService:         tockenmanager.NewTockenService(cache, db, defaultLimits),
-		LimitsManagerService: limitsmanagergo.NewPoolService(cache, db),
-	}
+type BalanceStrategyService interface {
+	CheckerWithTicker(ctx context.Context, t *time.Ticker) error
+	Balance(ctx context.Context) (httputil.ReverseProxy, error)
+}
+
+type LimitsManagerService interface {
+	CreateClientLimits(ctx context.Context, clientLimits model.ClientLimits) error
+	GetClientLimits(ctx context.Context, clientId string) (model.ClientLimits, error)
+	UpdateClientLimits(ctx context.Context, clientLimits model.ClientLimits) error
+	DeleteClientLimits(ctx context.Context, clientId string) error
 }

@@ -5,8 +5,10 @@ import (
 	"balancer/internal/config"
 	"balancer/internal/model"
 	userratelimits "balancer/internal/repository/user-rate-limits"
-	"balancer/internal/service"
 	inmemorycache "balancer/internal/service/in-memory-cache"
+	limitsmanagergo "balancer/internal/service/limits-manager"
+	leastconnections "balancer/internal/service/strategy/least-connections"
+	tockenmanager "balancer/internal/service/tocken-manager"
 	"context"
 	"flag"
 	"log"
@@ -19,22 +21,17 @@ import (
 var configPath string
 
 func init() {
-	flag.StringVar(&configPath, "config_path", "", "config path")
+	flag.StringVar(&configPath, "config-path", "", "config path")
 }
 
 func main() {
 	flag.Parse()
-	mainConfig, err := config.InitMainConfig("config/config.yaml")
+	mainConfig, err := config.InitMainConfig(configPath)
 	if err != nil {
 		log.Fatalf("failed config loading: %s", err)
 	}
 
 	ctx := context.Background()
-
-	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendComfig())
-	if err != nil {
-		log.Fatalf("failed to init backend pool: %s", err)
-	}
 
 	dbPool, err := pgxpool.New(ctx, mainConfig.LoadDbConfig())
 	if err != nil {
@@ -45,19 +42,26 @@ func main() {
 
 	cch := inmemorycache.NewInMemoryTokenBucketCache()
 
-	srv := service.NewService(cch, bcknPool, db, mainConfig.LoadDefaultLimits())
+	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendConfig())
+	if err != nil {
+		log.Fatalf("failed to init backend pool: %s", err)
+	}
 
-	srv.TokenService.StartRefillWorker(ctx)
+	tokenService := tockenmanager.NewTockenService(cch, db, mainConfig.LoadDefaultLimits())
+	balanceStrategy := leastconnections.NewLeastConnectionsService(bcknPool)
+	limitsManager := limitsmanagergo.NewPoolService(cch, db)
+
+	tokenService.StartRefillWorker(ctx)
 
 	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
 
 	go func() {
-		if err := srv.CheckerWithTicker(ctx, t); err != nil {
+		if err := balanceStrategy.CheckerWithTicker(ctx, t); err != nil {
 			log.Fatalf("failed init or check backend list: %s", err)
 		}
 	}()
 
-	h := api.NewProxyHandler(bcknPool, srv)
+	h := api.NewProxyHandler(bcknPool, tokenService, balanceStrategy, limitsManager)
 
 	m := http.NewServeMux()
 

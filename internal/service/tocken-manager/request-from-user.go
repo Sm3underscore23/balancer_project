@@ -9,21 +9,12 @@ import (
 func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) error {
 	userTb, ok := s.cache.Get(clientId)
 	if ok {
-		// select {
-		// case <-userTb.TokensChan:
-		// 	userTb.UseToken()
-		// 	log.Println(userTb.Token()) <- уходит в минус
-		// 	return nil
-		// default:
-		// 	return model.ErrRateLimit
-		// }
 		switch {
-		case userTb.Token() >= 1:
+		case userTb.Token() < 1:
+			return model.ErrRateLimit
+		default:
 			userTb.UseToken()
 			return nil
-
-		default:
-			return model.ErrRateLimit
 		}
 
 	}
@@ -46,7 +37,7 @@ func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) err
 	}
 
 	tb := model.NewTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
-	err = s.db.CreateUserLimits(ctx, &model.ClientLimits{
+	err = s.db.CreateUserLimits(ctx, model.ClientLimits{
 		ClientId:   clientId,
 		Capacity:   tb.MaxTokens,
 		RatePerSec: tb.RefillRate})

@@ -11,8 +11,9 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	resp := &TestRespose{
-		Method: r.Method,
-		Uri:    r.RequestURI,
+		ServerAdd: hostPort,
+		Method:    r.Method,
+		Uri:       r.RequestURI,
 	}
 
 	buf := new(bytes.Buffer)
@@ -47,6 +48,6 @@ func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("failed to write JSONE: %s", err)
+		log.Printf("failed to write JSONE: %s", err)
 	}
 }
