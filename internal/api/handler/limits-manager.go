@@ -16,7 +16,7 @@ func (h *Handler) CreateLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	err = h.srv.CreateClientLimits(r.Context(), &clientId)
+	err = h.limitsManager.CreateClientLimits(r.Context(), clientId) // убрать указатель
 	if err != nil {
 		writeJSONError(w, err)
 		return
@@ -34,7 +34,7 @@ func (h *Handler) GetLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	clientLimits, err := h.srv.GetClientLimits(r.Context(), clientId.ClientId)
+	clientLimits, err := h.limitsManager.GetClientLimits(r.Context(), clientId.ClientId)
 	if err != nil {
 		writeJSONError(w, err)
 		return
@@ -57,7 +57,7 @@ func (h *Handler) UpdateLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	err = h.srv.UpdateClientLimits(r.Context(), &clientId)
+	err = h.limitsManager.UpdateClientLimits(r.Context(), clientId)
 	if err != nil {
 		writeJSONError(w, err)
 		return
@@ -75,7 +75,7 @@ func (h *Handler) DeleteLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	err = h.srv.DeleteClientLimits(r.Context(), clientId.ClientId)
+	err = h.limitsManager.DeleteClientLimits(r.Context(), clientId.ClientId)
 	if err != nil {
 		writeJSONError(w, err)
 		return

@@ -5,8 +5,10 @@ import (
 	"balancer/internal/config"
 	"balancer/internal/model"
 	userratelimits "balancer/internal/repository/user-rate-limits"
-	"balancer/internal/service"
 	inmemorycache "balancer/internal/service/in-memory-cache"
+	limitsmanagergo "balancer/internal/service/limits-manager"
+	leastconnections "balancer/internal/service/strategy/least-connections"
+	tockenmanager "balancer/internal/service/tocken-manager"
 	"context"
 	"flag"
 	"log"
@@ -52,12 +54,12 @@ func main() {
 	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
 
 	go func() {
-		if err := srv.CheckerWithTicker(ctx, t); err != nil {
+		if err := balanceStrategy.CheckerWithTicker(ctx, t); err != nil {
 			log.Fatalf("failed init or check backend list: %s", err)
 		}
 	}()
 
-	h := api.NewProxyHandler(bcknPool, srv)
+	h := api.NewProxyHandler(bcknPool, tokenService, balanceStrategy, limitsManager)
 
 	m := http.NewServeMux()
 

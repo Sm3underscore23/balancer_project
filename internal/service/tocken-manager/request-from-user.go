@@ -37,7 +37,7 @@ func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) err
 	}
 
 	tb := model.NewTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
-	err = s.db.CreateUserLimits(ctx, &model.ClientLimits{
+	err = s.db.CreateUserLimits(ctx, model.ClientLimits{
 		ClientId:   clientId,
 		Capacity:   tb.MaxTokens,
 		RatePerSec: tb.RefillRate})

@@ -3,8 +3,8 @@ package tockenmanager
 import (
 	"balancer/internal/model"
 	"balancer/internal/repository"
+	"balancer/internal/service"
 	inmemorycache "balancer/internal/service/in-memory-cache"
-	"balancer/internal/service/interfaces"
 )
 
 type tokenService struct {
@@ -16,6 +16,6 @@ type tokenService struct {
 func NewTockenService(
 	cache *inmemorycache.InMemoryTokenBucketCache,
 	db repository.LimitsRepository,
-	defoultLimits *model.DefaultClientLimits) interfaces.TokenService {
+	defoultLimits *model.DefaultClientLimits) service.TokenService {
 	return &tokenService{cache: cache, db: db, defoultLimits: defoultLimits}
 }

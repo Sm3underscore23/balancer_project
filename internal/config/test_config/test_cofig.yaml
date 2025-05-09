@@ -1,0 +1,30 @@
+server:
+  host: testhost_server
+  port: 1
+
+db:
+  db_host: testhost_db
+  db_port: 2
+  db_name: test_db_name
+  db_user: test_db_user
+  db_password: 1234
+  db_sslmode: test_db_sslmode
+
+ticker_rate_sec: 123
+
+default_limits:
+  capacity: 10
+  rate_per_sec: 1
+
+backend_list:
+  - backend_url: http://testhost_backend1:3
+    config:
+      health:
+        method: TEST_METHOD
+        url: /helth_test_url
+
+  - backend_url: http://testhost_backend1:4
+    config:
+      health:
+        method: TEST_METHOD
+        url: /helth_test_url

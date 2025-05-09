@@ -14,15 +14,15 @@ func getClientID(r *http.Request) string {
 
 func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	err := h.srv.RequestFromUser(ctx, getClientID(r))
+	err := h.tokenService.RequestFromUser(ctx, getClientID(r))
 	if err != nil {
 		writeJSONError(w, err)
 		return
 	}
-	s, err := h.srv.BalanceStrategyRoundRobin(ctx)
+	prx, err := h.balanceStrategy.Balance(ctx)
 	if err != nil {
 		writeJSONError(w, err)
 		return
 	}
-	s.Prx.ServeHTTP(w, r)
+	prx.ServeHTTP(w, r)
 }

@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (r *repo) CreateUserLimits(ctx context.Context, clientLimits *model.ClientLimits) error {
+func (r *repo) CreateUserLimits(ctx context.Context, clientLimits model.ClientLimits) error {
 	builder := sq.Insert(clientsTableName).
 		PlaceholderFormat(sq.Dollar).
 		Columns(

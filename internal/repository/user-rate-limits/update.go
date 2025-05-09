@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (r *repo) UpdateUserLimits(ctx context.Context, clientLimits *model.ClientLimits) error {
+func (r *repo) UpdateUserLimits(ctx context.Context, clientLimits model.ClientLimits) error {
 	builder := sq.Update(clientsTableName).
 		SetMap(map[string]interface{}{
 			capacityColumn:   clientLimits.Capacity,
