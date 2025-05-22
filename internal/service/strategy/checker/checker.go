@@ -1,6 +1,8 @@
-package leastconnections
+package checker
 
 import (
+	"balancer/internal/model"
+	"balancer/internal/service"
 	"context"
 	"log"
 	"net/http"
@@ -8,25 +10,33 @@ import (
 	"time"
 )
 
-func (l *leastConnectionsService) CheckerWithTicker(ctx context.Context, t *time.Ticker) error {
-	l.check(ctx)
+
+
+type checker struct {
+	pool []*model.BackendServer
+}
+
+func NewChecker(pool []*model.BackendServer) service.Checker {
+	return &checker{pool: pool}
+}
+
+func (c *checker) CheckerWithTicker(ctx context.Context, t *time.Ticker) error {
+	c.check(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-t.C:
-			l.check(ctx)
+			c.check(ctx)
 		}
 	}
 }
 
-func (l *leastConnectionsService) check(ctx context.Context) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+func (c *checker) check(ctx context.Context) {
 
 	wg := sync.WaitGroup{}
 
-	for _, b := range l.Pool {
+	for _, b := range c.pool {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -46,28 +46,28 @@ type MainConfig struct {
 	DbConfig      dbConfig         `yaml:"db"`
 }
 
-func InitMainConfig(configPath string) (MainConfig, error) {
+func InitMainConfig(configPath string) (*MainConfig, error) {
 	var cfg MainConfig
 	if _, err := os.Stat(configPath); err != nil {
-		return MainConfig{}, model.ErrParseConfig
+		return nil, model.ErrParseConfig
 	}
 	rowConfig, err := os.ReadFile(configPath)
 	if err != nil {
-		return MainConfig{}, model.ErrParseConfig
+		return nil, model.ErrParseConfig
 	}
 	err = yaml.Unmarshal(rowConfig, &cfg)
 	if err != nil {
-		return MainConfig{}, model.ErrParseConfig
+		return nil, model.ErrParseConfig
 	}
-	return cfg, nil
+	return &cfg, nil
 }
 
 func (cfg *MainConfig) LoadTickerRateSec() uint64 {
 	return cfg.TickerRateSec
 }
 
-func (cfg *MainConfig) LoadDefaultLimits() *model.DefaultClientLimits { // почистить указатели
-	return &model.DefaultClientLimits{
+func (cfg *MainConfig) LoadDefaultLimits() model.DefaultClientLimits {
+	return model.DefaultClientLimits{
 		Capacity:   cfg.DefaultLimits.Capacity,
 		RatePerSec: cfg.DefaultLimits.RatePerSec,
 	}
@@ -76,7 +76,7 @@ func (cfg *MainConfig) LoadDefaultLimits() *model.DefaultClientLimits { // по�
 func (cfg *mainConfig) LoadBackendConfig() []*model.BackendServerSettings {
 	settings := make([]*model.BackendServerSettings, 0, len(cfg.BackendConfig))
 	for _, b := range cfg.BackendConfig {
-		settings = append(settings, &model.BackendServerSettings{
+		settings = append(settings, model.BackendServerSettings{
 			BckndUrl: b.BackendURL,
 			Method:   b.Config.Health.Method,
 			HelthUrl: b.Config.Health.URL,
@@ -86,7 +86,7 @@ func (cfg *mainConfig) LoadBackendConfig() []*model.BackendServerSettings {
 }
 
 func (cfg *MainConfig) LoadServerAddress() string {
-	return net.JoinHostPort(cfg.ServerConfig.Host, cfg.ServerConfig.Port) // Исправлено: было cfg.Host, cfg.DbHost
+	return net.JoinHostPort(cfg.ServerConfig.Host, cfg.ServerConfig.Port)
 }
 
 func (cfg *MainConfig) LoadDbConfig() string {

@@ -1,4 +1,4 @@
-package limitsmanagergo
+package limitsmanager
 
 import (
 	"balancer/internal/repository"
@@ -11,7 +11,7 @@ type limitsManagerService struct {
 	repo  repository.LimitsRepository
 }
 
-func NewPoolService(
+func NewLimitsManagerService(
 	cache *inmemorycache.InMemoryTokenBucketCache,
 	repo repository.LimitsRepository) service.LimitsManagerService {
 	return &limitsManagerService{cache: cache, repo: repo}

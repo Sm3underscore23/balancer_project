@@ -25,6 +25,11 @@ func TestProxy(t *testing.T) {
 	testBackendURL, _ := url.Parse(testBackendServer.URL)
 	testProxy := *httputil.NewSingleHostReverseProxy(testBackendURL)
 
+	b := &model.BackendServer{}
+	b.SetProxy(&testProxy)
+
+	var prxInterface model.Proxy = b
+
 	testTable := []struct {
 		name             string
 		clientId         string
@@ -46,7 +51,7 @@ func TestProxy(t *testing.T) {
 			},
 			mockBalance: func(controller *gomock.Controller) service.BalanceStrategyService {
 				mock := mock_service.NewMockBalanceStrategyService(controller)
-				mock.EXPECT().Balance(gomock.Any()).Return(testProxy, nil)
+				mock.EXPECT().Balance(gomock.Any()).Return(prxInterface, nil)
 				return mock
 			},
 			expectedStatus: http.StatusOK,
@@ -63,7 +68,7 @@ func TestProxy(t *testing.T) {
 			},
 			mockBalance: func(controller *gomock.Controller) service.BalanceStrategyService {
 				mock := mock_service.NewMockBalanceStrategyService(controller)
-				mock.EXPECT().Balance(gomock.Any()).Return(testProxy, nil)
+				mock.EXPECT().Balance(gomock.Any()).Return(prxInterface, nil)
 				return mock
 			},
 			expectedStatus: http.StatusOK,
@@ -83,7 +88,7 @@ func TestProxy(t *testing.T) {
 			},
 			expectedStatus: http.StatusTooManyRequests,
 			isError:        true,
-			expectedBody:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrRateLimit),
+			expectedBody:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrRateLimit), // исправить
 		},
 		{
 			name:             "no avilible servers",
@@ -96,7 +101,7 @@ func TestProxy(t *testing.T) {
 			},
 			mockBalance: func(controller *gomock.Controller) service.BalanceStrategyService {
 				mock := mock_service.NewMockBalanceStrategyService(controller)
-				mock.EXPECT().Balance(gomock.Any()).Return(httputil.ReverseProxy{}, model.ErrNoAvilibleServers)
+				mock.EXPECT().Balance(gomock.Any()).Return(nil, model.ErrNoAvilibleServers)
 				return mock
 			},
 			expectedStatus: http.StatusServiceUnavailable,
@@ -108,7 +113,6 @@ func TestProxy(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
-			// defer req.Body.Close()
 
 			if testCase.isClientIdAPIKey {
 				req.Header.Set("X-API-Key", testCase.clientId)

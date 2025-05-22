@@ -1,4 +1,4 @@
-package limitsmanagergo
+package limitsmanager
 
 import (
 	"balancer/internal/model"
@@ -12,10 +12,10 @@ func (s *limitsManagerService) UpdateClientLimits(ctx context.Context, clientLim
 	}
 
 	if !isExists {
-		return model.ErrUserNotExists
+		return model.ErrClientNotExists
 	}
 
-	err = s.repo.UpdateUserLimits(ctx, clientLimits)
+	err = s.repo.UpdateClientLimits(ctx, clientLimits)
 	if err != nil {
 		return err
 	}

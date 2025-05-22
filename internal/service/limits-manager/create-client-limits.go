@@ -1,4 +1,4 @@
-package limitsmanagergo
+package limitsmanager
 
 import (
 	"balancer/internal/model"
@@ -12,13 +12,17 @@ func (s *limitsManagerService) CreateClientLimits(ctx context.Context, clientLim
 	}
 
 	if isExists {
-		return model.ErrUserAlreadyExists
+		return model.ErrClientAlreadyExists
 	}
 
-	err = s.repo.CreateUserLimits(ctx, clientLimits)
+	err = s.repo.CreateClientLimits(ctx, clientLimits)
 
 	if err != nil {
 		return err
+	}
+
+	if _, ok := s.cache.Get(clientLimits.ClientId); ok {
+		s.cache.Set(clientLimits.ClientId, model.ConverClientLimitstoTB(clientLimits))
 	}
 
 	return nil

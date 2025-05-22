@@ -1,4 +1,4 @@
-package tockenmanager
+package tokenmanager
 
 import (
 	"balancer/internal/model"
@@ -8,17 +8,19 @@ import (
 
 func refill(tb *model.TokenBucket) {
 	now := time.Now()
-	elapsed := now.Sub(tb.LastRefillTime).Seconds()
-	if tb.Token() > tb.MaxTokens {
-		tb.SetToken(tb.MaxTokens)
-	} else {
-		tb.AddToken(elapsed * tb.RefillRate)
+	elapsed := now.Sub(tb.LastRefillTime()).Seconds()
+
+	tb.AddToken(elapsed * tb.RefillRate())
+
+	if tb.TokenAmount() > tb.MaxTokens() {
+		tb.SetToken(tb.MaxTokens())
 	}
-	tb.LastRefillTime = now
+
+	tb.SetLastRefillTime(now)
 }
 
 func (s *tokenService) StartRefillWorker(ctx context.Context) {
-	ticker := time.NewTicker(time.Microsecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 100)
 	go func() {
 		defer ticker.Stop()
 		for {
@@ -26,7 +28,7 @@ func (s *tokenService) StartRefillWorker(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				s.cache.Range(func(clientID string, bucket *model.TokenBucket) {
+				s.cache.Range(func(clientId string, bucket *model.TokenBucket) {
 					refill(bucket)
 				})
 			}

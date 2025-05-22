@@ -4,10 +4,9 @@ import (
 	"balancer/internal/model"
 	"context"
 	"math"
-	"net/http/httputil"
 )
 
-func (l *leastConnectionsService) Balance(ctx context.Context) (httputil.ReverseProxy, error) {
+func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, error) {
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -17,23 +16,22 @@ func (l *leastConnectionsService) Balance(ctx context.Context) (httputil.Reverse
 		index         int
 	)
 
-	for i, b := range l.Pool {
+	for i, b := range l.pool {
 		if !b.IsOnline() {
 			continue
 		}
 
-		numOfCon := l.conList[i]
-
-		if minConections > numOfCon {
-			minConections = numOfCon
+		if minConections > b.numOfCon {
+			minConections = b.numOfCon
 			index = i
 		}
 	}
 
 	if minConections != math.MaxUint64 {
-		l.conList[index] += 1
-		return *l.Pool[index].Prx, nil
+		l.pool[index].numOfCon += 1
+		prx := l.pool[index]
+		return prx, nil
 	}
 
-	return httputil.ReverseProxy{}, model.ErrNoAvilibleServers
+	return nil, model.ErrNoAvilibleServers
 }

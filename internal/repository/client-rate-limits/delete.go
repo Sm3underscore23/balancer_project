@@ -1,4 +1,4 @@
-package userratelimits
+package clientratelimits
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (r *repo) DeleteUserLimits(ctx context.Context, clientId string) error {
+func (r *repo) DeleteClientLimits(ctx context.Context, clientId string) error {
 	builder := sq.Delete(clientsTableName).
 		PlaceholderFormat(sq.Dollar).Where(sq.Eq{clientIdColumn: clientId})
 

@@ -12,7 +12,6 @@ package mock_service
 import (
 	model "balancer/internal/model"
 	context "context"
-	httputil "net/http/httputil"
 	reflect "reflect"
 	time "time"
 
@@ -69,6 +68,44 @@ func (mr *MockTokenServiceMockRecorder) StartRefillWorker(ctx any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartRefillWorker", reflect.TypeOf((*MockTokenService)(nil).StartRefillWorker), ctx)
 }
 
+// MockChecker is a mock of Checker interface.
+type MockChecker struct {
+	ctrl     *gomock.Controller
+	recorder *MockCheckerMockRecorder
+	isgomock struct{}
+}
+
+// MockCheckerMockRecorder is the mock recorder for MockChecker.
+type MockCheckerMockRecorder struct {
+	mock *MockChecker
+}
+
+// NewMockChecker creates a new mock instance.
+func NewMockChecker(ctrl *gomock.Controller) *MockChecker {
+	mock := &MockChecker{ctrl: ctrl}
+	mock.recorder = &MockCheckerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockChecker) EXPECT() *MockCheckerMockRecorder {
+	return m.recorder
+}
+
+// CheckerWithTicker mocks base method.
+func (m *MockChecker) CheckerWithTicker(ctx context.Context, t *time.Ticker) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckerWithTicker", ctx, t)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckerWithTicker indicates an expected call of CheckerWithTicker.
+func (mr *MockCheckerMockRecorder) CheckerWithTicker(ctx, t any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckerWithTicker", reflect.TypeOf((*MockChecker)(nil).CheckerWithTicker), ctx, t)
+}
+
 // MockBalanceStrategyService is a mock of BalanceStrategyService interface.
 type MockBalanceStrategyService struct {
 	ctrl     *gomock.Controller
@@ -94,10 +131,10 @@ func (m *MockBalanceStrategyService) EXPECT() *MockBalanceStrategyServiceMockRec
 }
 
 // Balance mocks base method.
-func (m *MockBalanceStrategyService) Balance(ctx context.Context) (httputil.ReverseProxy, error) {
+func (m *MockBalanceStrategyService) Balance(ctx context.Context) (model.Proxy, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Balance", ctx)
-	ret0, _ := ret[0].(httputil.ReverseProxy)
+	ret0, _ := ret[0].(model.Proxy)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -106,20 +143,6 @@ func (m *MockBalanceStrategyService) Balance(ctx context.Context) (httputil.Reve
 func (mr *MockBalanceStrategyServiceMockRecorder) Balance(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Balance", reflect.TypeOf((*MockBalanceStrategyService)(nil).Balance), ctx)
-}
-
-// CheckerWithTicker mocks base method.
-func (m *MockBalanceStrategyService) CheckerWithTicker(ctx context.Context, t *time.Ticker) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckerWithTicker", ctx, t)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CheckerWithTicker indicates an expected call of CheckerWithTicker.
-func (mr *MockBalanceStrategyServiceMockRecorder) CheckerWithTicker(ctx, t any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckerWithTicker", reflect.TypeOf((*MockBalanceStrategyService)(nil).CheckerWithTicker), ctx, t)
 }
 
 // MockLimitsManagerService is a mock of LimitsManagerService interface.

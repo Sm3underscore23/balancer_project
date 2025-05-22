@@ -1,4 +1,4 @@
-package tockenmanager
+package tokenmanager
 
 import (
 	"context"
@@ -10,7 +10,7 @@ func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) err
 	userTb, ok := s.cache.Get(clientId)
 	if ok {
 		switch {
-		case userTb.Token() < 1:
+		case userTb.TokenAmount() < 1:
 			return model.ErrRateLimit
 		default:
 			userTb.UseToken()
@@ -24,7 +24,7 @@ func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) err
 	}
 
 	if isExists {
-		clientLimit, err := s.db.GetUserLimits(ctx, clientId)
+		clientLimit, err := s.db.GetClientLimits(ctx, clientId)
 		if err != nil {
 			return err
 		}
@@ -37,10 +37,10 @@ func (s *tokenService) RequestFromUser(ctx context.Context, clientId string) err
 	}
 
 	tb := model.NewTokenBucket(s.defoultLimits.Capacity, s.defoultLimits.RatePerSec)
-	err = s.db.CreateUserLimits(ctx, model.ClientLimits{
+	err = s.db.CreateClientLimits(ctx, model.ClientLimits{
 		ClientId:   clientId,
-		Capacity:   tb.MaxTokens,
-		RatePerSec: tb.RefillRate})
+		Capacity:   tb.MaxTokens(),
+		RatePerSec: tb.RefillRate()})
 
 	if err != nil {
 		return err
