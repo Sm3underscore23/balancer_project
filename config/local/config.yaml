@@ -13,8 +13,8 @@ db:
 ticker_rate_sec: 5
 
 default_limits:
-  capacity: 10
-  rate_per_sec: 1
+  capacity: 4
+  rate_per_sec: 0.1
 
 backend_list:
   - backend_url: http://localhost:8081

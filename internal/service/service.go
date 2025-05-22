@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"net/http/httputil"
 	"time"
 
 	"balancer/internal/model"
@@ -14,9 +13,12 @@ type TokenService interface {
 	StartRefillWorker(ctx context.Context)
 }
 
-type BalanceStrategyService interface {
+type Checker interface {
 	CheckerWithTicker(ctx context.Context, t *time.Ticker) error
-	Balance(ctx context.Context) (httputil.ReverseProxy, error)
+}
+
+type BalanceStrategyService interface {
+	Balance(ctx context.Context) (model.Proxy, error)
 }
 
 type LimitsManagerService interface {

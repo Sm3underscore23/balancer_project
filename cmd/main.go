@@ -4,11 +4,12 @@ import (
 	api "balancer/internal/api/handler"
 	"balancer/internal/config"
 	"balancer/internal/model"
-	userratelimits "balancer/internal/repository/user-rate-limits"
+	clientratelimits "balancer/internal/repository/client-rate-limits"
 	inmemorycache "balancer/internal/service/in-memory-cache"
-	limitsmanagergo "balancer/internal/service/limits-manager"
+	limitsmanager "balancer/internal/service/limits-manager"
+	"balancer/internal/service/strategy/checker"
 	leastconnections "balancer/internal/service/strategy/least-connections"
-	tockenmanager "balancer/internal/service/tocken-manager"
+	tokenmanager "balancer/internal/service/token-manager"
 	"context"
 	"flag"
 	"log"
@@ -38,7 +39,7 @@ func main() {
 		log.Fatalf("failed to connect to database: %s", err)
 	}
 
-	db := userratelimits.NewUserRateLimitsRepo(dbPool)
+	db := clientratelimits.NewClientRateLimitsRepo(dbPool)
 
 	cch := inmemorycache.NewInMemoryTokenBucketCache()
 
@@ -47,16 +48,18 @@ func main() {
 		log.Fatalf("failed to init backend pool: %s", err)
 	}
 
-	tokenService := tockenmanager.NewTockenService(cch, db, mainConfig.LoadDefaultLimits())
-	balanceStrategy := leastconnections.NewLeastConnectionsService(bcknPool)
-	limitsManager := limitsmanagergo.NewPoolService(cch, db)
+	tokenService := tokenmanager.NewTockenService(cch, db, mainConfig.LoadDefaultLimits())
+	balanceStrategy := leastconnections.LeastConnectionsService(bcknPool)
+	checkerService := checker.NewChecker(bcknPool)
+	limitsManager := limitsmanager.NewLimitsManagerService(cch, db)
 
 	tokenService.StartRefillWorker(ctx)
 
 	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
 
 	go func() {
-		if err := balanceStrategy.CheckerWithTicker(ctx, t); err != nil {
+		checkerService.CheckerWithTicker(ctx, t)
+		if err != nil {
 			log.Fatalf("failed init or check backend list: %s", err)
 		}
 	}()

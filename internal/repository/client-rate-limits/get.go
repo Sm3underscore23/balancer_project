@@ -1,4 +1,4 @@
-package userratelimits
+package clientratelimits
 
 import (
 	"balancer/internal/model"
@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (r *repo) GetUserLimits(ctx context.Context, clientId string) (model.ClientLimits, error) {
+func (r *repo) GetClientLimits(ctx context.Context, clientId string) (model.ClientLimits, error) {
 	builder := sq.Select(
 		clientIdColumn,
 		capacityColumn,

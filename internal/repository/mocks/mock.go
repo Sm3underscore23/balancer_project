@@ -41,47 +41,47 @@ func (m *MockLimitsRepository) EXPECT() *MockLimitsRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateUserLimits mocks base method.
-func (m *MockLimitsRepository) CreateUserLimits(ctx context.Context, info model.ClientLimits) error {
+// CreateClientLimits mocks base method.
+func (m *MockLimitsRepository) CreateClientLimits(ctx context.Context, info model.ClientLimits) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUserLimits", ctx, info)
+	ret := m.ctrl.Call(m, "CreateClientLimits", ctx, info)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateUserLimits indicates an expected call of CreateUserLimits.
-func (mr *MockLimitsRepositoryMockRecorder) CreateUserLimits(ctx, info any) *gomock.Call {
+// CreateClientLimits indicates an expected call of CreateClientLimits.
+func (mr *MockLimitsRepositoryMockRecorder) CreateClientLimits(ctx, info any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserLimits", reflect.TypeOf((*MockLimitsRepository)(nil).CreateUserLimits), ctx, info)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateClientLimits", reflect.TypeOf((*MockLimitsRepository)(nil).CreateClientLimits), ctx, info)
 }
 
-// DeleteUserLimits mocks base method.
-func (m *MockLimitsRepository) DeleteUserLimits(ctx context.Context, clientId string) error {
+// DeleteClientLimits mocks base method.
+func (m *MockLimitsRepository) DeleteClientLimits(ctx context.Context, clientId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserLimits", ctx, clientId)
+	ret := m.ctrl.Call(m, "DeleteClientLimits", ctx, clientId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteUserLimits indicates an expected call of DeleteUserLimits.
-func (mr *MockLimitsRepositoryMockRecorder) DeleteUserLimits(ctx, clientId any) *gomock.Call {
+// DeleteClientLimits indicates an expected call of DeleteClientLimits.
+func (mr *MockLimitsRepositoryMockRecorder) DeleteClientLimits(ctx, clientId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserLimits", reflect.TypeOf((*MockLimitsRepository)(nil).DeleteUserLimits), ctx, clientId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClientLimits", reflect.TypeOf((*MockLimitsRepository)(nil).DeleteClientLimits), ctx, clientId)
 }
 
-// GetUserLimits mocks base method.
-func (m *MockLimitsRepository) GetUserLimits(ctx context.Context, clientId string) (model.ClientLimits, error) {
+// GetClientLimits mocks base method.
+func (m *MockLimitsRepository) GetClientLimits(ctx context.Context, clientId string) (model.ClientLimits, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserLimits", ctx, clientId)
+	ret := m.ctrl.Call(m, "GetClientLimits", ctx, clientId)
 	ret0, _ := ret[0].(model.ClientLimits)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserLimits indicates an expected call of GetUserLimits.
-func (mr *MockLimitsRepositoryMockRecorder) GetUserLimits(ctx, clientId any) *gomock.Call {
+// GetClientLimits indicates an expected call of GetClientLimits.
+func (mr *MockLimitsRepositoryMockRecorder) GetClientLimits(ctx, clientId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserLimits", reflect.TypeOf((*MockLimitsRepository)(nil).GetUserLimits), ctx, clientId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientLimits", reflect.TypeOf((*MockLimitsRepository)(nil).GetClientLimits), ctx, clientId)
 }
 
 // IsClientExists mocks base method.
@@ -99,16 +99,16 @@ func (mr *MockLimitsRepositoryMockRecorder) IsClientExists(ctx, userId any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsClientExists", reflect.TypeOf((*MockLimitsRepository)(nil).IsClientExists), ctx, userId)
 }
 
-// UpdateUserLimits mocks base method.
-func (m *MockLimitsRepository) UpdateUserLimits(ctx context.Context, updateData model.ClientLimits) error {
+// UpdateClientLimits mocks base method.
+func (m *MockLimitsRepository) UpdateClientLimits(ctx context.Context, updateData model.ClientLimits) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserLimits", ctx, updateData)
+	ret := m.ctrl.Call(m, "UpdateClientLimits", ctx, updateData)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUserLimits indicates an expected call of UpdateUserLimits.
-func (mr *MockLimitsRepositoryMockRecorder) UpdateUserLimits(ctx, updateData any) *gomock.Call {
+// UpdateClientLimits indicates an expected call of UpdateClientLimits.
+func (mr *MockLimitsRepositoryMockRecorder) UpdateClientLimits(ctx, updateData any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserLimits", reflect.TypeOf((*MockLimitsRepository)(nil).UpdateUserLimits), ctx, updateData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClientLimits", reflect.TypeOf((*MockLimitsRepository)(nil).UpdateClientLimits), ctx, updateData)
 }

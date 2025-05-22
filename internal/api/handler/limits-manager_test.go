@@ -26,7 +26,7 @@ func TestCreateLimits(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }", // маршал структуры
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().CreateClientLimits(gomock.Any(), model.ClientLimits{
@@ -56,10 +56,10 @@ func TestCreateLimits(t *testing.T) {
 					ClientId:   "123.4.5.6",
 					Capacity:   10,
 					RatePerSec: 1,
-				}).Return(model.ErrUserAlreadyExists)
+				}).Return(model.ErrClientAlreadyExists)
 				return mock
 			},
-			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrUserAlreadyExists),
+			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrClientAlreadyExists),
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -143,10 +143,10 @@ func TestGetLimits(t *testing.T) {
 				mock.EXPECT().GetClientLimits(
 					gomock.Any(),
 					"123.4.5.6").
-					Return(model.ClientLimits{}, model.ErrUserNotExists)
+					Return(model.ClientLimits{}, model.ErrClientNotExists)
 				return mock
 			},
-			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrUserNotExists),
+			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrClientNotExists),
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -228,10 +228,10 @@ func TestUpdateLimits(t *testing.T) {
 						ClientId:   "123.4.5.6",
 						Capacity:   10,
 						RatePerSec: 1}).
-					Return(model.ErrUserNotExists)
+					Return(model.ErrClientNotExists)
 				return mock
 			},
-			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrUserNotExists),
+			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrClientNotExists),
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -308,10 +308,10 @@ func TestDeleteLimits(t *testing.T) {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().DeleteClientLimits(
 					gomock.Any(), "123.4.5.6").
-					Return(model.ErrUserNotExists)
+					Return(model.ErrClientNotExists)
 				return mock
 			},
-			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrUserNotExists),
+			expectedData:   fmt.Sprintf("{\"errors\":\"%s\"}\n", model.ErrClientNotExists),
 			expectedStatus: http.StatusBadRequest,
 		},
 		{

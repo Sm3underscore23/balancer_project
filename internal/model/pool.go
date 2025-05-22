@@ -14,7 +14,7 @@ type BackendServerSettings struct {
 
 type BackendServer struct {
 	isOnline atomic.Bool
-	Prx      *httputil.ReverseProxy
+	prx      *httputil.ReverseProxy
 	BackendServerSettings
 }
 
@@ -26,7 +26,24 @@ func (b *BackendServer) ChangeHealthStatus(val bool) {
 	b.isOnline.Store(val)
 }
 
-func NewBackendPool(settings []*BackendServerSettings) ([]*BackendServer, error) {
+func (b *BackendServer) Proxy() *httputil.ReverseProxy {
+	return b.prx
+}
+
+func (b *BackendServer) SetProxy(prx *httputil.ReverseProxy) {
+	b.prx = prx
+}
+
+func (b *BackendServer) URL() string {
+	return b.BckndUrl
+}
+
+type Proxy interface {
+	Proxy() *httputil.ReverseProxy
+	URL() string
+}
+
+func NewBackendPool(settings []BackendServerSettings) ([]*BackendServer, error) {
 	backendList := make([]*BackendServer, len(settings))
 	for i, b := range settings {
 		if b.HelthUrl == "" {
@@ -49,7 +66,7 @@ func NewBackendPool(settings []*BackendServerSettings) ([]*BackendServer, error)
 				Method:   b.Method,
 				HelthUrl: b.BckndUrl + b.HelthUrl,
 			},
-			Prx: prx,
+			prx: prx,
 		}
 	}
 

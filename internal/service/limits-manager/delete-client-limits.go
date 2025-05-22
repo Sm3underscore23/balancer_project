@@ -1,4 +1,4 @@
-package limitsmanagergo
+package limitsmanager
 
 import (
 	"balancer/internal/model"
@@ -12,10 +12,10 @@ func (s *limitsManagerService) DeleteClientLimits(ctx context.Context, clientId 
 	}
 
 	if !isExists {
-		return model.ErrUserNotExists
+		return model.ErrClientNotExists
 	}
 
-	err = s.repo.DeleteUserLimits(ctx, clientId)
+	err = s.repo.DeleteClientLimits(ctx, clientId)
 	if err != nil {
 		return err
 	}

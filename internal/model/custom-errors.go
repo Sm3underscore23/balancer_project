@@ -17,10 +17,10 @@ var (
 
 	ErrInvalidInput = fmt.Errorf("invalid input data")
 
-	ErrUserNotExists     = fmt.Errorf("user not exists,  please use servise for create")
-	ErrUserAlreadyExists = fmt.Errorf("user already exists, please use servise for update")
-	ErrMethodNotAllowed  = fmt.Errorf("method not allowed")
-	ErrRateLimit         = fmt.Errorf("rate limit exceeded")
+	ErrClientNotExists     = fmt.Errorf("client not exists,  please use servise for create")
+	ErrClientAlreadyExists = fmt.Errorf("clinet already exists, please use servise for update")
+	ErrMethodNotAllowed    = fmt.Errorf("method not allowed")
+	ErrRateLimit           = fmt.Errorf("rate limit exceeded")
 
 	ErrWriteMessage      = fmt.Errorf("failed to write json message")
 	ErrNoAvilibleServers = fmt.Errorf("no healthy backends available")
@@ -28,12 +28,12 @@ var (
 	ErrDb = fmt.Errorf("db error")
 
 	ErrWithStatus = map[error]int{
-		ErrInvalidInput:      http.StatusBadRequest,
-		ErrUserNotExists:     http.StatusBadRequest,
-		ErrUserAlreadyExists: http.StatusBadRequest,
-		ErrMethodNotAllowed:  http.StatusMethodNotAllowed,
-		ErrRateLimit:         http.StatusTooManyRequests,
-		ErrNoAvilibleServers: http.StatusServiceUnavailable,
+		ErrInvalidInput:        http.StatusBadRequest,
+		ErrClientNotExists:     http.StatusBadRequest,
+		ErrClientAlreadyExists: http.StatusBadRequest,
+		ErrMethodNotAllowed:    http.StatusMethodNotAllowed,
+		ErrRateLimit:           http.StatusTooManyRequests,
+		ErrNoAvilibleServers:   http.StatusServiceUnavailable,
 	}
 )
 

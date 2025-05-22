@@ -24,5 +24,5 @@ func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, err)
 		return
 	}
-	prx.ServeHTTP(w, r)
+	prx.Proxy().ServeHTTP(w, r)
 }
