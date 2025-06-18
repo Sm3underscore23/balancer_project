@@ -21,7 +21,7 @@ func (s *limitsManagerService) GetClientLimits(ctx context.Context, clientId str
 	}
 
 	if _, ok := s.cache.Get(clientId); !ok {
-		s.cache.Set(clientId, model.ConverClientLimitstoTB(clientLimits))
+		s.cache.Set(clientId, model.ConvertClientLimitstoTB(clientLimits))
 	}
 
 	return clientLimits, nil

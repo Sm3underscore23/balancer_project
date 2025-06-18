@@ -20,7 +20,7 @@ func main() {
 		hostPort = os.Getenv("HOST_PORT")
 	}
 
-	log.Println(hostPort)
+	log.Printf("Server is starting on http://%s\n", hostPort)
 
 	if hostPort == "" {
 		log.Fatalf("failed to get host and port: empty")

@@ -27,4 +27,4 @@ backend_list:
     config:
       health:
         method: TEST_METHOD
-        url: /helth_test_url
+        url: /helth_test_url'

@@ -62,11 +62,11 @@ func InitMainConfig(configPath string) (*MainConfig, error) {
 	return &cfg, nil
 }
 
-func (cfg *MainConfig) LoadTickerRateSec() uint64 {
+func (cfg *MainConfig) GetTickerRateSec() uint64 {
 	return cfg.TickerRateSec
 }
 
-func (cfg *MainConfig) LoadDefaultLimits() model.DefaultClientLimits {
+func (cfg *MainConfig) GetDefaultLimits() model.DefaultClientLimits {
 	return model.DefaultClientLimits{
 		Capacity:   cfg.DefaultLimits.Capacity,
 		RatePerSec: cfg.DefaultLimits.RatePerSec,
@@ -85,11 +85,11 @@ func (cfg *MainConfig) LoadBackendConfig() []model.BackendServerSettings {
 	return settings
 }
 
-func (cfg *MainConfig) LoadServerAddress() string {
+func (cfg *MainConfig) GetServerAddress() string {
 	return net.JoinHostPort(cfg.ServerConfig.Host, cfg.ServerConfig.Port)
 }
 
-func (cfg *MainConfig) LoadDbConfig() string {
+func (cfg *MainConfig) GetDbConfig() string {
 	return fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		cfg.DbConfig.DbHost,

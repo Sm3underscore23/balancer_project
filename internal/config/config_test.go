@@ -16,7 +16,7 @@ func TestConfig(t *testing.T) {
 	}{
 		{
 			name:           "valid config",
-			configPath:     "test_config/test_cofig.yaml",
+			configPath:     "testdata/test_config.yaml",
 			errParseConfig: nil,
 			expectedConfig: MainConfig{
 				TickerRateSec: 123,
@@ -92,7 +92,7 @@ func TestConfig(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, testCase.expectedConfig.LoadTickerRateSec(), cfg.TickerRateSec)
+			assert.Equal(t, testCase.expectedConfig.GetTickerRateSec(), cfg.TickerRateSec)
 			assert.Equal(t, testCase.expectedConfig.DefaultLimits, cfg.DefaultLimits)
 			assert.Equal(t, testCase.expectedConfig.ServerConfig, cfg.ServerConfig)
 			assert.Equal(t, testCase.expectedConfig.DbConfig, cfg.DbConfig)

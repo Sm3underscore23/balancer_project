@@ -14,6 +14,7 @@ type TokenBucket struct {
 }
 
 func (tb *TokenBucket) TokenAmount() float64 {
+	tb.mu.Lock()
 	defer tb.mu.Unlock()
 	return tb.tokens
 }
@@ -56,10 +57,12 @@ func (tb *TokenBucket) LastRefillTime() time.Time {
 }
 
 func (tb *TokenBucket) SetLastRefillTime(t time.Time) {
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
 	tb.lastRefillTime = t
 }
 
-func ConverClientLimitstoTB(clientLimits ClientLimits) *TokenBucket {
+func ConvertClientLimitstoTB(clientLimits ClientLimits) *TokenBucket {
 	return &TokenBucket{
 		maxTokens:      clientLimits.Capacity,
 		refillRate:     clientLimits.RatePerSec,

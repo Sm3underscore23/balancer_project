@@ -71,18 +71,18 @@ func TestCheckerWithProgressiveHealth(t *testing.T) {
 	ctx := context.Background()
 	ch := checker{pool: pool}
 
-	ch.check(ctx)
+	ch.poolCheck(ctx)
 	assert.Equal(t, 0, countOnline(pool))
 
 	globalCheckCount += 1
-	ch.check(ctx)
+	ch.poolCheck(ctx)
 	assert.Equal(t, 1, countOnline(pool))
 
 	globalCheckCount += 1
-	ch.check(ctx)
+	ch.poolCheck(ctx)
 	assert.Equal(t, 2, countOnline(pool))
 
 	globalCheckCount += 1
-	ch.check(ctx)
+	ch.poolCheck(ctx)
 	assert.Equal(t, 3, countOnline(pool))
 }

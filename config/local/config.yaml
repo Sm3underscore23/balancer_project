@@ -10,10 +10,10 @@ db:
   db_password: 1234
   db_sslmode: disable
 
-ticker_rate_sec: 5
+ticker_rate_sec: 1
 
 default_limits:
-  capacity: 4
+  capacity: 5
   rate_per_sec: 0.1
 
 backend_list:
@@ -24,6 +24,12 @@ backend_list:
         url: /
 
   - backend_url: http://localhost:8082
+    config:
+      health:
+        method: HEAD
+        url: /
+
+  - backend_url: http://localhost:8083
     config:
       health:
         method: HEAD

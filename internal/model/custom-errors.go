@@ -27,7 +27,7 @@ var (
 
 	ErrDb = fmt.Errorf("db error")
 
-	ErrWithStatus = map[error]int{
+	errWithStatus = map[error]int{
 		ErrInvalidInput:        http.StatusBadRequest,
 		ErrClientNotExists:     http.StatusBadRequest,
 		ErrClientAlreadyExists: http.StatusBadRequest,
@@ -38,7 +38,7 @@ var (
 )
 
 func GetStatusCode(err error) int {
-	for mapError, code := range ErrWithStatus {
+	for mapError, code := range errWithStatus {
 		if errors.Is(err, mapError) {
 			return code
 		}
