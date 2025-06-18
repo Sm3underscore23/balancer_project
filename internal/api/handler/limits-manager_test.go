@@ -16,8 +16,9 @@ import (
 )
 
 func TestCreateLimits(t *testing.T) {
+	validInput := fmt.Sprintf("{ \"client_id\": \"%s\", \"capacity\": %v, \"rate_per_sec\": %v }", "123.4.5.6", 10, 1)
 
-	testTamble := []struct {
+	testTable := []struct {
 		name           string
 		input          string
 		mockBehavior   func(c *gomock.Controller) service.LimitsManagerService
@@ -26,7 +27,7 @@ func TestCreateLimits(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }", // маршал структуры
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().CreateClientLimits(gomock.Any(), model.ClientLimits{
@@ -49,7 +50,7 @@ func TestCreateLimits(t *testing.T) {
 		},
 		{
 			name:  "user already exists",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().CreateClientLimits(gomock.Any(), model.ClientLimits{
@@ -64,7 +65,7 @@ func TestCreateLimits(t *testing.T) {
 		},
 		{
 			name:  "db error",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().CreateClientLimits(gomock.Any(), model.ClientLimits{
@@ -79,10 +80,9 @@ func TestCreateLimits(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testTamble {
+	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("POST", "/limits/create", strings.NewReader(testCase.input))
-			// defer req.Body.Close()
 
 			w := httptest.NewRecorder()
 
@@ -99,8 +99,9 @@ func TestCreateLimits(t *testing.T) {
 }
 
 func TestGetLimits(t *testing.T) {
+	validInput := fmt.Sprintf("{ \"client_id\": \"%s\"}", "123.4.5.6")
 
-	testTamble := []struct {
+	testTable := []struct {
 		name           string
 		input          string
 		mockBehavior   func(c *gomock.Controller) service.LimitsManagerService
@@ -109,7 +110,7 @@ func TestGetLimits(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			input: "{ \"client_id\": \"123.4.5.6\"}",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().GetClientLimits(
@@ -123,7 +124,7 @@ func TestGetLimits(t *testing.T) {
 						nil)
 				return mock
 			},
-			expectedData:   "{\"client_id\":\"123.4.5.6\",\"capacity\":10,\"rate_per_sec\":1}\n",
+			expectedData:   fmt.Sprintf("{\"client_id\":\"%s\",\"capacity\":%v,\"rate_per_sec\":%v}\n","123.4.5.6", 10, 1),
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -137,7 +138,7 @@ func TestGetLimits(t *testing.T) {
 		},
 		{
 			name:  "user not exists",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().GetClientLimits(
@@ -151,7 +152,7 @@ func TestGetLimits(t *testing.T) {
 		},
 		{
 			name:  "db error",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().GetClientLimits(
@@ -165,7 +166,7 @@ func TestGetLimits(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testTamble {
+	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/limits/get", strings.NewReader(testCase.input))
 
@@ -184,8 +185,9 @@ func TestGetLimits(t *testing.T) {
 }
 
 func TestUpdateLimits(t *testing.T) {
+	validInput := fmt.Sprintf("{ \"client_id\": \"%s\", \"capacity\": %v, \"rate_per_sec\": %v }", "123.4.5.6", 10, 1)
 
-	testTamble := []struct {
+	testTable := []struct {
 		name           string
 		input          string
 		mockBehavior   func(c *gomock.Controller) service.LimitsManagerService
@@ -194,7 +196,7 @@ func TestUpdateLimits(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			input: "{\"client_id\":\"123.4.5.6\",\"capacity\":10,\"rate_per_sec\":1}",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().UpdateClientLimits(
@@ -219,7 +221,7 @@ func TestUpdateLimits(t *testing.T) {
 		},
 		{
 			name:  "user not exists",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().UpdateClientLimits(
@@ -236,7 +238,7 @@ func TestUpdateLimits(t *testing.T) {
 		},
 		{
 			name:  "db error",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().UpdateClientLimits(
@@ -253,7 +255,7 @@ func TestUpdateLimits(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testTamble {
+	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("PUT", "/limits/update", strings.NewReader(testCase.input))
 
@@ -272,8 +274,9 @@ func TestUpdateLimits(t *testing.T) {
 }
 
 func TestDeleteLimits(t *testing.T) {
+	validInput := fmt.Sprintf("{ \"client_id\": \"%s\"}", "123.4.5.6")
 
-	testTamble := []struct {
+	testTable := []struct {
 		name           string
 		input          string
 		mockBehavior   func(c *gomock.Controller) service.LimitsManagerService
@@ -282,7 +285,7 @@ func TestDeleteLimits(t *testing.T) {
 	}{
 		{
 			name:  "OK",
-			input: "{ \"client_id\": \"123.4.5.6\"}",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().DeleteClientLimits(
@@ -303,7 +306,7 @@ func TestDeleteLimits(t *testing.T) {
 		},
 		{
 			name:  "user not exists",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().DeleteClientLimits(
@@ -316,7 +319,7 @@ func TestDeleteLimits(t *testing.T) {
 		},
 		{
 			name:  "db error",
-			input: "{ \"client_id\": \"123.4.5.6\", \"capacity\": 10, \"rate_per_sec\": 1 }",
+			input: validInput,
 			mockBehavior: func(c *gomock.Controller) service.LimitsManagerService {
 				mock := mock_service.NewMockLimitsManagerService(c)
 				mock.EXPECT().DeleteClientLimits(
@@ -329,7 +332,7 @@ func TestDeleteLimits(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testTamble {
+	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			req := httptest.NewRequest("DELETE", "/limits/delete", strings.NewReader(testCase.input))
 

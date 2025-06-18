@@ -2,34 +2,18 @@ package model
 
 import (
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
 type TokenBucket struct {
 	tokens         float64
-	MaxTokens      float64
-	RefillRate     float64
+	maxTokens      float64
+	refillRate     float64
 	mu             sync.Mutex
-	TokensChan     chan struct{}
-	LastRefillTime time.Time
-
-	TokensChan chan struct{}
+	lastRefillTime time.Time
 }
 
-func (t *TokenBucket) UseToken() {
-	t.Mu.Lock()
-	defer t.Mu.Unlock()
-	t.Tokens -= 1
-}
-
-func (t *TokenBucket) AddToken() {
-	t.Mu.Lock()
-	defer t.Mu.Unlock()
-	t.Tokens += 1
-}
-
-func (tb *TokenBucket) Token() float64 {
+func (tb *TokenBucket) TokenAmount() float64 {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 	return tb.tokens
@@ -60,20 +44,38 @@ func (tb *TokenBucket) SetToken(a float64) {
 	tb.tokens = a
 }
 
-func ConverClientLimitstoTB(clientLimits ClientLimits) *TokenBucket {
+func (tb *TokenBucket) MaxTokens() float64 {
+	return tb.maxTokens
+}
+
+func (tb *TokenBucket) RefillRate() float64 {
+	return tb.refillRate
+}
+
+func (tb *TokenBucket) LastRefillTime() time.Time {
+	return tb.lastRefillTime
+}
+
+func (tb *TokenBucket) SetLastRefillTime(t time.Time) {
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
+	tb.lastRefillTime = t
+}
+
+func ConvertClientLimitstoTB(clientLimits ClientLimits) *TokenBucket {
 	return &TokenBucket{
-		MaxTokens:      clientLimits.Capacity,
-		RefillRate:     clientLimits.RatePerSec,
-		LastRefillTime: time.Now(),
+		maxTokens:      clientLimits.Capacity,
+		refillRate:     clientLimits.RatePerSec,
+		lastRefillTime: time.Now(),
 	}
 }
 
 func NewTokenBucket(maxTokens float64, refillRate float64) *TokenBucket {
 	tb := &TokenBucket{
 		tokens:         maxTokens,
-		MaxTokens:      maxTokens,
-		RefillRate:     refillRate,
-		LastRefillTime: time.Now(),
+		maxTokens:      maxTokens,
+		refillRate:     refillRate,
+		lastRefillTime: time.Now(),
 	}
 	return tb
 

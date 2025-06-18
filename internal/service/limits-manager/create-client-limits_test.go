@@ -81,6 +81,8 @@ func TestCreateClientLimits(t *testing.T) {
 			})
 
 			assert.Equal(t, testCase.expectedError, err)
+
+			// сделать проверку кеша
 		})
 	}
 }

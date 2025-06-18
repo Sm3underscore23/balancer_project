@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"balancer/internal/model"
 )
@@ -14,7 +13,7 @@ type TokenService interface {
 }
 
 type Checker interface {
-	CheckerWithTicker(ctx context.Context, t *time.Ticker) error
+	CheckerWithTicker(ctx context.Context, rate uint64) error
 }
 
 type BalanceStrategyService interface {

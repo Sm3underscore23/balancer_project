@@ -3,7 +3,6 @@ package leastconnections
 import (
 	"balancer/internal/model"
 	"context"
-	"math"
 )
 
 func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, error) {
@@ -12,7 +11,7 @@ func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, err
 	defer l.mu.Unlock()
 
 	var (
-		minConections uint64 = math.MaxUint64
+		minConections = l.pool[0].numOfCon
 		index         int
 	)
 
@@ -27,7 +26,7 @@ func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, err
 		}
 	}
 
-	if minConections != math.MaxUint64 {
+	if l.pool[index].IsOnline() {
 		l.pool[index].numOfCon += 1
 		prx := l.pool[index]
 		return prx, nil

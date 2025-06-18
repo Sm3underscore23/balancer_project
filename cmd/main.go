@@ -11,9 +11,13 @@ import (
 	leastconnections "balancer/internal/service/strategy/least-connections"
 	tokenmanager "balancer/internal/service/token-manager"
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,36 +30,39 @@ func init() {
 }
 
 func main() {
+
 	flag.Parse()
 	mainConfig, err := config.InitMainConfig(configPath)
 	if err != nil {
 		log.Fatalf("failed config loading: %s", err)
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	dbPool, err := pgxpool.New(ctx, mainConfig.LoadDbConfig())
+	dbPool, err := pgxpool.New(ctx, mainConfig.GetDbConfig())
 	if err != nil {
 		log.Fatalf("failed to connect to database: %s", err)
 	}
 
-	db := clientratelimits.NewClientRateLimitsRepo(dbPool)
+	rateLimitsRepo := clientratelimits.NewClientRateLimitsRepo(dbPool)
 
-	cch := inmemorycache.NewInMemoryTokenBucketCache()
+	tolenBucketCache := inmemorycache.NewInMemoryTokenBucketCache()
 
 	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendConfig())
 	if err != nil {
 		log.Fatalf("failed to init backend pool: %s", err)
 	}
 
-	srv := service.NewService(cch, bcknPool, db, mainConfig.LoadDefaultLimits())
+	tokenService := tokenmanager.NewTockenService(tolenBucketCache, rateLimitsRepo, mainConfig.GetDefaultLimits())
+	balanceStrategy := leastconnections.LeastConnectionsService(bcknPool)
+	checkerService := checker.NewChecker(bcknPool)
+	limitsManager := limitsmanager.NewLimitsManagerService(tolenBucketCache, rateLimitsRepo)
 
 	srv.TokenService.StartRefillWorker(ctx)
 
-	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
-
 	go func() {
-		checkerService.CheckerWithTicker(ctx, t)
+		err := checkerService.CheckerWithTicker(ctx, mainConfig.GetTickerRateSec())
 		if err != nil {
 			log.Fatalf("failed init or check backend list: %s", err)
 		}
@@ -75,9 +82,32 @@ func main() {
 
 	m.HandleFunc("DELETE /limits/delete", h.DeleteLimits)
 
-	log.Println(mainConfig.LoadServerAddress())
-
-	if err := http.ListenAndServe(mainConfig.LoadServerAddress(), m); err != nil {
-		log.Fatalf("failed listening and serving: %s", err)
+	server := &http.Server{
+		Addr:    mainConfig.GetServerAddress(),
+		Handler: m,
 	}
+
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		log.Println("Shutting down gracefully...")
+		cancel()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP server Shutdown error: %v", err)
+		}
+	}()
+
+	log.Println(mainConfig.GetServerAddress())
+
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("HTTP server ListenAndServe error: %v", err)
+	}
+
+	log.Println("Server stopped")
 }

@@ -20,8 +20,10 @@ func (s *limitsManagerService) UpdateClientLimits(ctx context.Context, clientLim
 		return err
 	}
 
-	if _, ok := s.cache.Get(clientLimits.ClientId); ok {
-		s.cache.Set(clientLimits.ClientId, model.ConverClientLimitstoTB(clientLimits))
+	if currClientBucket, ok := s.cache.Get(clientLimits.ClientId); ok {
+		updatedClientBucket := model.ConvertClientLimitstoTB(clientLimits)
+		updatedClientBucket.SetToken(currClientBucket.TokenAmount())
+		s.cache.Set(clientLimits.ClientId, updatedClientBucket)
 	}
 
 	return nil

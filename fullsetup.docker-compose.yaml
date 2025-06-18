@@ -18,7 +18,9 @@ services:
       - my-network
 
   balancer:
-    image: s3m23/balancer:v0.1
+    build:
+      context: .
+      dockerfile: backend-test.Dockerfile
     ports:
       - "8080:8080"
     container_name: balancer
@@ -32,7 +34,9 @@ services:
       - "./config/fullsetup/config.yaml:/root/config/config.yaml"
     
   backend1:
-    image: s3m23/backend-test:v0.1
+    build:
+      context: .
+      dockerfile: backend-test.Dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -43,7 +47,9 @@ services:
       - my-network
   
   backend2:
-    image: s3m23/backend-test:v0.1
+    build:
+      context: .
+      dockerfile: backend-test.Dockerfile
     ports:
       - "8082:8082"
     environment:
@@ -54,7 +60,9 @@ services:
       - my-network
 
   backend3:
-    image: s3m23/backend-test:v0.1
+    build:
+      context: .
+      dockerfile: backend-test.Dockerfile
     ports:
       - "8083:8083"
     environment:
