@@ -15,45 +15,74 @@ Balancer project - это балансировщик нагрузки, кото�
 
 ## Технологии
 ### Основные
-- [Go:v1.23.2](https://github.com/golang/go)
-- [PostgreSQL:v17.4](https://github.com/postgres/postgres)
-- [Docker:v28.0.4](https://github.com/docker)
-- [Docker compose:v2.34.0](https://github.com/docker/compose)
+- [Go](https://github.com/golang/go)
+- [PostgreSQL](https://github.com/postgres/postgres)
+- [Docker](https://github.com/docker)
+- [Docker compose](https://github.com/docker/compose)
 
 ### Вспомогательные
-- [PGX:v5.7.4(db driver)](https://github.com/jackc/pgx)
-- [Goose:v3.24.2(migrations)](https://github.com/pressly/goose)
-- [Squirrel:v1.5.4(query builder)](https://github.com/Masterminds/squirrel)
+- [PGX](https://github.com/jackc/pgx)
+- [Goose](https://github.com/pressly/goose)
+- [Squirrel](https://github.com/Masterminds/squirrel)
 
 ---
 
 ## Начало работы
 
-**Перед началом работы сверьтесь с актуальными версиями технологий.**
-**Также проверьте наличие конфигов, .env и make файла, а также файлы с миграциями**
+### .env
+```txt
+PG_PORT=1234
+PG_DATABASE_NAME=your_database_name
+PG_USER=your_pg_user
+PG_PASSWORD=your_awesome_password1234
+MIGRATION_DIR=./your_migrations/migrations
+```
 
-### Быстрый старт
+### config
+```yaml
+server:                                 # balancer server settings
+  host: localhost                       # balancer server host
+  port: 8080                            # balancer server port
 
-Выполните команду
+ticker_rate_sec: 1                      # ticker rate for backends heath check
+
+default_limits:                         # defoult settings for clients limits
+  capacity: 5                           # defoult token capacity
+  rate_per_sec: 0.1                     # defoult token refiil rate
+
+backend_list:                           # backends settings
+  - backend_url: http://localhost:8081  # backend url
+    config:                             # current backend settings
+      health:                           # current backend health check settings
+        method: HEAD                    # health check method
+        url: /                          # health check url
+```
+
+### Полный запуск с тестовыми бэкендами
+
+Выполните команды
 ```sh
-make quick-up
+make fullsetup-up
+make migration-up
 ```
 
 Для завершения:
 ```sh
-make quick-down
+make fullsetup-down
 ```
 
 ### Запуск локально с тестовыми бэкендами
 
 Выполните команду
 ```sh
-make lockal-up
+make local-up
+make migration-up
+go run cmd/main.go -config-path config/local/config.yaml
 ```
 
 Для завершения:
 ```sh
-make lockal-down
+make local-down
 ```
 
 ### Запуск без тестовых бэкендов
@@ -61,6 +90,7 @@ make lockal-down
 Выполните команду
 ```sh
 make no-b-up
+make migration-up
 ```
 
 Для завершения:
