@@ -1,6 +1,7 @@
 package api
 
 import (
+	"balancer/pkg/logger"
 	"net/http"
 )
 
@@ -13,16 +14,26 @@ func getClientID(r *http.Request) string {
 }
 
 func (h *Handler) Proxy(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	err := h.tokenService.RequestFromUser(ctx, getClientID(r))
+	clientID := getClientID(r)
+
+	ctx := logger.AddValuesToContext(r.Context(),
+		logger.ClientID, clientID,
+	)
+
+	logger.FromContext(ctx).Info("handler Proxy started")
+
+	err := h.tokenService.RequestFromUser(ctx, clientID)
 	if err != nil {
-		writeJSONError(w, err)
+		writeJSONError(ctx, w, err)
 		return
 	}
 	prx, err := h.balanceStrategy.Balance(ctx)
 	if err != nil {
-		writeJSONError(w, err)
+		writeJSONError(ctx, w, err)
 		return
 	}
 	prx.Proxy().ServeHTTP(w, r)
+
+	ctx = logger.AddValuesToContext(r.Context(), logger.StatusCode, http.StatusOK)
+	logger.FromContext(ctx).Info("handler Proxy complete")
 }

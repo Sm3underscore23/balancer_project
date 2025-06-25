@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/subosito/gotenv"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,7 +47,7 @@ type MainConfig struct {
 	DbConfig      dbConfig         `yaml:"db"`
 }
 
-func InitMainConfig(configPath string) (*MainConfig, error) {
+func InitMainConfig(configPath string, isLocal bool) (*MainConfig, error) {
 	var cfg MainConfig
 	if _, err := os.Stat(configPath); err != nil {
 		return nil, model.ErrParseConfig
@@ -58,6 +59,22 @@ func InitMainConfig(configPath string) (*MainConfig, error) {
 	err = yaml.Unmarshal(rowConfig, &cfg)
 	if err != nil {
 		return nil, model.ErrParseConfig
+	}
+
+	if isLocal {
+		err = gotenv.Load()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cfg.DbConfig = dbConfig{
+		DbHost:     os.Getenv("PG_HOST"),
+		DbPort:     os.Getenv("PG_PORT"),
+		DbName:     os.Getenv("PG_DATABASE_NAME"),
+		DbUser:     os.Getenv("PG_USER"),
+		DbPassword: os.Getenv("PG_PASSWORD"),
+		DbSSL:      os.Getenv("PG_SSLMODE"),
 	}
 	return &cfg, nil
 }

@@ -84,7 +84,7 @@ func TestConfig(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			cfg, err := InitMainConfig(testCase.configPath)
+			cfg, err := InitMainConfig(testCase.configPath, true)
 
 			if testCase.errParseConfig != nil {
 				assert.ErrorIs(t, err, testCase.errParseConfig)

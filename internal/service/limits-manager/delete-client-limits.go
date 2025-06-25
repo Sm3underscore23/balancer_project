@@ -5,8 +5,20 @@ import (
 	"context"
 )
 
-func (s *limitsManagerService) DeleteClientLimits(ctx context.Context, clientId string) error {
-	isExists, err := s.repo.IsClientExists(ctx, clientId)
+func (s *limitsManagerService) DeleteClientLimits(ctx context.Context, clientID string) error {
+
+	if _, ok := s.cache.Get(clientID); !ok {
+		s.cache.Delete(clientID)
+
+		err := s.repo.DeleteClientLimits(ctx, clientID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	isExists, err := s.repo.IsClientExists(ctx, clientID)
 	if err != nil {
 		return err
 	}
@@ -15,13 +27,13 @@ func (s *limitsManagerService) DeleteClientLimits(ctx context.Context, clientId 
 		return model.ErrClientNotExists
 	}
 
-	err = s.repo.DeleteClientLimits(ctx, clientId)
+	err = s.repo.DeleteClientLimits(ctx, clientID)
 	if err != nil {
 		return err
 	}
 
-	if _, ok := s.cache.Get(clientId); !ok {
-		s.cache.Delete(clientId)
+	if _, ok := s.cache.Get(clientID); !ok {
+		s.cache.Delete(clientID)
 	}
 
 	return nil
