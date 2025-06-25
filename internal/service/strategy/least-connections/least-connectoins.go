@@ -2,6 +2,7 @@ package leastconnections
 
 import (
 	"balancer/internal/model"
+	"balancer/pkg/logger"
 	"context"
 )
 
@@ -12,7 +13,7 @@ func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, err
 
 	var (
 		minConections = l.pool[0].numOfCon
-		index         int
+		idx           int
 	)
 
 	for i, b := range l.pool {
@@ -22,13 +23,16 @@ func (l *leastConnectionsService) Balance(ctx context.Context) (model.Proxy, err
 
 		if minConections > b.numOfCon {
 			minConections = b.numOfCon
-			index = i
+			idx = i
 		}
 	}
 
-	if l.pool[index].IsOnline() {
-		l.pool[index].numOfCon += 1
-		prx := l.pool[index]
+	if l.pool[idx].IsOnline() {
+		l.pool[idx].numOfCon += 1
+		prx := l.pool[idx]
+		ctx = logger.AddValuesToContext(ctx, logger.BackendUrl, l.pool[idx].BckndUrl)
+		logger.FromContext(ctx).Info("get backend address")
+
 		return prx, nil
 	}
 

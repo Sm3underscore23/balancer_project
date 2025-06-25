@@ -10,10 +10,12 @@ import (
 	"balancer/internal/service/strategy/checker"
 	leastconnections "balancer/internal/service/strategy/least-connections"
 	tokenmanager "balancer/internal/service/token-manager"
+	"balancer/pkg/logger"
 	"context"
 	"errors"
 	"flag"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,17 +26,20 @@ import (
 )
 
 var configPath string
+var isLocal bool
 
 func init() {
 	flag.StringVar(&configPath, "config-path", "", "config path")
+	flag.BoolVar(&isLocal, "local", false, "is local run")
 }
 
 func main() {
+	logger.InitLogging()
 
 	flag.Parse()
-	mainConfig, err := config.InitMainConfig(configPath)
+	mainConfig, err := config.InitMainConfig(configPath, isLocal)
 	if err != nil {
-		log.Fatalf("failed config loading: %s", err)
+		logger.Fatal("failed config loading", logger.Error, err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -42,7 +47,7 @@ func main() {
 
 	dbPool, err := pgxpool.New(ctx, mainConfig.GetDbConfig())
 	if err != nil {
-		log.Fatalf("failed to connect to database: %s", err)
+		logger.Fatal("failed to connect to database", logger.Error, err)
 	}
 
 	rateLimitsRepo := clientratelimits.NewClientRateLimitsRepo(dbPool)
@@ -51,7 +56,7 @@ func main() {
 
 	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendConfig())
 	if err != nil {
-		log.Fatalf("failed to init backend pool: %s", err)
+		logger.Fatal("failed to init backend pool", logger.Error, err)
 	}
 
 	tokenService := tokenmanager.NewTockenService(tolenBucketCache, rateLimitsRepo, mainConfig.GetDefaultLimits())
@@ -61,26 +66,21 @@ func main() {
 
 	srv.TokenService.StartRefillWorker(ctx)
 
-	go func() {
-		err := checkerService.CheckerWithTicker(ctx, mainConfig.GetTickerRateSec())
-		if err != nil {
-			log.Fatalf("failed init or check backend list: %s", err)
-		}
-	}()
+	go checkerService.CheckerWithTicker(ctx, mainConfig.GetTickerRateSec())
 
 	h := api.NewProxyHandler(bcknPool, tokenService, balanceStrategy, limitsManager)
 
 	m := http.NewServeMux()
 
-	m.HandleFunc("/", h.Proxy)
+	m.Handle("/", api.Middleware(h.Proxy))
 
-	m.HandleFunc("POST /limits/create", h.CreateLimits)
+	m.Handle("POST /limits/create", api.Middleware(h.CreateLimits))
 
-	m.HandleFunc("GET /limits/get", h.GetLimits)
+	m.Handle("GET /limits/get", api.Middleware(h.GetLimits))
 
-	m.HandleFunc("PUT /limits/update", h.UpdateLimits)
+	m.Handle("PUT /limits/update", api.Middleware(h.UpdateLimits))
 
-	m.HandleFunc("DELETE /limits/delete", h.DeleteLimits)
+	m.Handle("DELETE /limits/delete", api.Middleware(h.DeleteLimits))
 
 	server := &http.Server{
 		Addr:    mainConfig.GetServerAddress(),
@@ -92,22 +92,22 @@ func main() {
 		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
 		<-sigint
 
-		log.Println("Shutting down gracefully...")
+		slog.Debug("Shutting down gracefully...")
 		cancel()
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			log.Printf("HTTP server Shutdown error: %v", err)
+			logger.Fatal("HTTP server Shutdown error", logger.Error, err)
 		}
 	}()
 
 	log.Println(mainConfig.GetServerAddress())
 
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("HTTP server ListenAndServe error: %v", err)
+		logger.Fatal("HTTP server ListenAndServe error", logger.Error, err)
 	}
 
-	log.Println("Server stopped")
+	slog.Info("Server stopped")
 }

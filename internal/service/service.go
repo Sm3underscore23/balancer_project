@@ -13,7 +13,7 @@ type TokenService interface {
 }
 
 type Checker interface {
-	CheckerWithTicker(ctx context.Context, rate uint64) error
+	CheckerWithTicker(ctx context.Context, rate uint64)
 }
 
 type BalanceStrategyService interface {

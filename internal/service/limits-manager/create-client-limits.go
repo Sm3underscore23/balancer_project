@@ -6,6 +6,11 @@ import (
 )
 
 func (s *limitsManagerService) CreateClientLimits(ctx context.Context, clientLimits model.ClientLimits) error {
+
+	if _, ok := s.cache.Get(clientLimits.ClientId); !ok {
+		return model.ErrClientAlreadyExists
+	}
+
 	isExists, err := s.repo.IsClientExists(ctx, clientLimits.ClientId)
 	if err != nil {
 		return err
@@ -21,9 +26,7 @@ func (s *limitsManagerService) CreateClientLimits(ctx context.Context, clientLim
 		return err
 	}
 
-	if _, ok := s.cache.Get(clientLimits.ClientId); !ok {
-		s.cache.Set(clientLimits.ClientId, model.ConvertClientLimitstoTB(clientLimits))
-	}
+	s.cache.Set(clientLimits.ClientId, model.ConvertClientLimitstoTB(clientLimits))
 
 	return nil
 }

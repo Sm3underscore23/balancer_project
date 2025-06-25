@@ -1,14 +1,6 @@
 server:
-  host: localhost
+  host: localhost 
   port: 8080
-
-db:
-  db_host: localhost
-  db_port: 5432
-  db_name: clients_db
-  db_user: admin
-  db_password: 1234
-  db_sslmode: disable
 
 ticker_rate_sec: 1
 

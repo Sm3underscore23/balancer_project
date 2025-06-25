@@ -10,9 +10,9 @@ import (
 type roundRobbinService struct {
 	current uint64
 	mu      sync.Mutex
-	Pool    []*model.BackendServer
+	pool    []*model.BackendServer
 }
 
 func RoundRobbinService(pool []*model.BackendServer) service.BalanceStrategyService {
-	return &roundRobbinService{Pool: pool}
+	return &roundRobbinService{pool: pool}
 }

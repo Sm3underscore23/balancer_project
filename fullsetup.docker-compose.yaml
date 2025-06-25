@@ -7,31 +7,42 @@ services:
       - POSTGRES_DB=${PG_DATABASE_NAME}
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
-    container_name: db
+    container_name: postgres
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DATABASE_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 5
-    networks:
-      - my-network
 
   balancer:
     build:
       context: .
-      dockerfile: backend-test.Dockerfile
+      dockerfile: balancer.Dockerfile
     ports:
       - "8080:8080"
     container_name: balancer
+    environment:
+    - PG_HOST=postgres
+    - PG_PORT=5432
+    - PG_DATABASE_NAME=clients_db
+    - PG_USER=admin
+    - PG_PASSWORD=${PG_PASSWORD}
+    - PG_SSLMODE=disable
+    - MIGRATION_DIR=./migrations
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - my-network
+      graylog:
+        condition: service_started
     volumes:
-      - "./config/fullsetup/config.yaml:/root/config/config.yaml"
+      - "/home/mrss/Рабочий стол/balancer/config/fullsetup/config.yaml:/root/config.yaml"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://0.0.0.0:12201"
+        tag: "logs"
     
   backend1:
     build:
@@ -43,8 +54,6 @@ services:
       - HOST_PORT=0.0.0.0:8081
     container_name: backend1
     restart: unless-stopped
-    networks:
-      - my-network
   
   backend2:
     build:
@@ -56,8 +65,6 @@ services:
       - HOST_PORT=0.0.0.0:8082
     container_name: backend2
     restart: unless-stopped
-    networks:
-      - my-network
 
   backend3:
     build:
@@ -69,9 +76,76 @@ services:
       - HOST_PORT=0.0.0.0:8083
     container_name: backend3
     restart: unless-stopped
-    networks:
-      - my-network
+      
+  mongodb:
+    image: "mongo:6.0"  
+    restart: "on-failure"
 
-networks:
-  my-network:
-    driver: bridge
+  datanode:
+    image: "${DATANODE_IMAGE:-graylog/graylog-datanode:6.1}"
+    hostname: "datanode"
+    container_name: datanode
+    environment:
+      GRAYLOG_DATANODE_NODE_ID_FILE: "/var/lib/graylog-datanode/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_DATANODE_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_DATANODE_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "8999:8999/tcp"   # DataNode API
+      - "9200:9200/tcp"
+      - "9300:9300/tcp"
+    volumes:
+      - "graylog-datanode:/var/lib/graylog-datanode"
+    restart: "on-failure"
+
+  graylog:
+    hostname: "server"
+    image: "${GRAYLOG_IMAGE:-graylog/graylog:6.1}"
+    container_name: graylog
+    depends_on:
+      mongodb:
+        condition: "service_started"
+      datanode:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/data/node-id"
+      # GRAYLOG_DATANODE_PASSWORD_SECRET and GRAYLOG_PASSWORD_SECRET MUST be the same value
+      GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET:?Please configure GRAYLOG_PASSWORD_SECRET in the .env file}"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2:?Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file}"
+      GREYLOG_ROOT_TIMEZONE: "Europe/Moscow"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      TZ: "Europe/Moscow"
+
+    ports:
+    - "5044:5044/tcp"   # Beats
+    - "5140:5140/udp"   # Syslog
+    - "5140:5140/tcp"   # Syslog
+    - "5555:5555/tcp"   # RAW TCP
+    - "5555:5555/udp"   # RAW UDP
+    - "9000:9000/tcp"   # Server API
+    - "12201:12201/tcp" # GELF TCP
+    - "12201:12201/udp" # GELF UDP
+    #- "10000:10000/tcp" # Custom TCP port
+    #- "10000:10000/udp" # Custom UDP port
+    - "13301:13301/tcp" # Forwarder data
+    - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - "graylog_data:/usr/share/graylog/data/data"
+    restart: "on-failure"
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+  graylog-datanode:
+  graylog_data:
+
