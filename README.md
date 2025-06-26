@@ -19,6 +19,7 @@ Balancer project - это балансировщик нагрузки, кото�
 - [PostgreSQL](https://github.com/postgres/postgres)
 - [Docker](https://github.com/docker)
 - [Docker compose](https://github.com/docker/compose)
+- [Graylog](https://graylog.org/)
 
 ### Вспомогательные
 - [PGX](https://github.com/jackc/pgx)
@@ -36,6 +37,9 @@ PG_DATABASE_NAME=your_database_name
 PG_USER=your_pg_user
 PG_PASSWORD=your_awesome_password1234
 MIGRATION_DIR=./your_migrations/migrations
+
+GRAYLOG_PASSWORD_SECRET=somepasswordsalt
+GRAYLOG_ROOT_PASSWORD_SHA2=your_sha256_password_hash
 ```
 
 ### config
@@ -58,7 +62,7 @@ backend_list:                           # backends settings
         url: /                          # health check url
 ```
 
-### Полный запуск с тестовыми бэкендами
+### Полный запуск проекта
 
 Выполните команды
 ```sh
@@ -71,7 +75,7 @@ make migration-up
 make fullsetup-down
 ```
 
-### Запуск локально с тестовыми бэкендами
+### Запуск локально с тестовыми бэкендам
 
 Выполните команду
 ```sh
@@ -83,19 +87,6 @@ go run cmd/main.go -config-path config/local/config.yaml
 Для завершения:
 ```sh
 make local-down
-```
-
-### Запуск без тестовых бэкендов
-
-Выполните команду
-```sh
-make no-b-up
-make migration-up
-```
-
-Для завершения:
-```sh
-make no-b-down
 ```
 
 ---
