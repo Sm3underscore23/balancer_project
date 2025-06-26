@@ -1,4 +1,4 @@
-package userratelimits
+package clientratelimits
 
 import (
 	"context"

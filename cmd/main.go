@@ -4,76 +4,110 @@ import (
 	api "balancer/internal/api/handler"
 	"balancer/internal/config"
 	"balancer/internal/model"
-	userratelimits "balancer/internal/repository/user-rate-limits"
-	"balancer/internal/service"
+	clientratelimits "balancer/internal/repository/client-rate-limits"
 	inmemorycache "balancer/internal/service/in-memory-cache"
+	limitsmanager "balancer/internal/service/limits-manager"
+	"balancer/internal/service/strategy/checker"
+	leastconnections "balancer/internal/service/strategy/least-connections"
+	tokenmanager "balancer/internal/service/token-manager"
+	"balancer/pkg/logger"
 	"context"
+	"errors"
 	"flag"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var configPath string
+var isLocal bool
 
 func init() {
 	flag.StringVar(&configPath, "config-path", "", "config path")
+	flag.BoolVar(&isLocal, "local", false, "is local run")
 }
 
 func main() {
+	logger.InitLogging()
+
 	flag.Parse()
-	mainConfig, err := config.InitMainConfig(configPath)
+	mainConfig, err := config.InitMainConfig(configPath, isLocal)
 	if err != nil {
-		log.Fatalf("failed config loading: %s", err)
+		logger.Fatal("failed config loading", logger.Error, err)
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	dbPool, err := pgxpool.New(ctx, mainConfig.LoadDbConfig())
+	dbPool, err := pgxpool.New(ctx, mainConfig.GetDbConfig())
 	if err != nil {
-		log.Fatalf("failed to connect to database: %s", err)
+		logger.Fatal("failed to connect to database", logger.Error, err)
 	}
 
-	db := userratelimits.NewUserRateLimitsRepo(dbPool)
+	rateLimitsRepo := clientratelimits.NewClientRateLimitsRepo(dbPool)
 
-	cch := inmemorycache.NewInMemoryTokenBucketCache()
+	tolenBucketCache := inmemorycache.NewInMemoryTokenBucketCache()
 
 	bcknPool, err := model.NewBackendPool(mainConfig.LoadBackendConfig())
 	if err != nil {
-		log.Fatalf("failed to init backend pool: %s", err)
+		logger.Fatal("failed to init backend pool", logger.Error, err)
 	}
 
-	srv := service.NewService(cch, bcknPool, db, mainConfig.LoadDefaultLimits())
+	tokenService := tokenmanager.NewTockenService(tolenBucketCache, rateLimitsRepo, mainConfig.GetDefaultLimits())
+	balanceStrategy := leastconnections.LeastConnectionsService(bcknPool)
+	checkerService := checker.NewChecker(bcknPool)
+	limitsManager := limitsmanager.NewLimitsManagerService(tolenBucketCache, rateLimitsRepo)
 
 	srv.TokenService.StartRefillWorker(ctx)
 
-	t := time.NewTicker(time.Second * time.Duration(mainConfig.LoadTickerRateSec()))
+	go checkerService.CheckerWithTicker(ctx, mainConfig.GetTickerRateSec())
 
-	go func() {
-		if err := srv.CheckerWithTicker(ctx, t); err != nil {
-			log.Fatalf("failed init or check backend list: %s", err)
-		}
-	}()
-
-	h := api.NewProxyHandler(bcknPool, srv)
+	h := api.NewProxyHandler(bcknPool, tokenService, balanceStrategy, limitsManager)
 
 	m := http.NewServeMux()
 
-	m.HandleFunc("/", h.Proxy)
+	m.Handle("/", api.Middleware(h.Proxy))
 
-	m.HandleFunc("POST /limits/create", h.CreateLimits)
+	m.Handle("POST /limits/create", api.Middleware(h.CreateLimits))
 
-	m.HandleFunc("GET /limits/get", h.GetLimits)
+	m.Handle("GET /limits/get", api.Middleware(h.GetLimits))
 
-	m.HandleFunc("PUT /limits/update", h.UpdateLimits)
+	m.Handle("PUT /limits/update", api.Middleware(h.UpdateLimits))
 
-	m.HandleFunc("DELETE /limits/delete", h.DeleteLimits)
+	m.Handle("DELETE /limits/delete", api.Middleware(h.DeleteLimits))
 
-	log.Println(mainConfig.LoadServerAddress())
-
-	if err := http.ListenAndServe(mainConfig.LoadServerAddress(), m); err != nil {
-		log.Fatalf("failed listening and serving: %s", err)
+	server := &http.Server{
+		Addr:    mainConfig.GetServerAddress(),
+		Handler: m,
 	}
+
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		slog.Debug("Shutting down gracefully...")
+		cancel()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			logger.Fatal("HTTP server Shutdown error", logger.Error, err)
+		}
+	}()
+
+	log.Println(mainConfig.GetServerAddress())
+
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Fatal("HTTP server ListenAndServe error", logger.Error, err)
+	}
+
+	slog.Info("Server stopped")
 }

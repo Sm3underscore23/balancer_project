@@ -1,20 +1,12 @@
 server:
-  host: localhost
+  host: localhost 
   port: 8080
 
-db:
-  db_host: localhost
-  db_port: 5432
-  db_name: clients_db
-  db_user: admin
-  db_password: 1234
-  db_sslmode: disable
+ticker_rate_sec: 1
 
-ticker_rate_sec: 5
-
-defoult_limits:
-  capasity: 3
-  rate_per_sec: 0.3
+default_limits:
+  capacity: 5
+  rate_per_sec: 0.1
 
 backend_list:
   - backend_url: http://localhost:8081
@@ -24,6 +16,12 @@ backend_list:
         url: /
 
   - backend_url: http://localhost:8082
+    config:
+      health:
+        method: HEAD
+        url: /
+
+  - backend_url: http://localhost:8083
     config:
       health:
         method: HEAD

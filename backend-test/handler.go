@@ -1,16 +1,16 @@
 package main
 
 import (
-	"balancer/internal/model"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	resp := &TestRespose{
+	resp := &TestResponse{
 		ServerAdd: hostPort,
 		Method:    r.Method,
 		Uri:       r.RequestURI,
@@ -18,14 +18,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(r.Body)
-	if err != nil && err != io.EOF {
+	if err != nil && errors.Is(err, io.EOF) {
 		writeJSONError(w, http.StatusBadRequest, "cannot read body")
 		return
 	}
 
-	if buf.Len() == 0 {
-		resp.Data = json.RawMessage(`null`)
-	} else {
+	if buf.Len() != 0 {
 		if err := json.Unmarshal(buf.Bytes(), &resp.Data); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
 			return
@@ -42,7 +40,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
-	response := model.ErrorResponse{
+	response := ErrorResponse{
 		Message: message,
 	}
 

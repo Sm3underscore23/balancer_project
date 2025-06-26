@@ -12,5 +12,25 @@ type ClientLimits struct {
 }
 
 type ClientIdRequest struct {
-	ClientId string `json:"client_id"`
+	ClientId string `json:"client_id" binding:"required"`
+}
+
+func (c *ClientLimits) ValidateClientLimits() error {
+	if c.ClientId == "" {
+		return ErrInvalidInput
+	}
+	if c.Capacity == 0 {
+		return ErrInvalidInput
+	}
+	if c.RatePerSec == 0 {
+		return ErrInvalidInput
+	}
+	return nil
+}
+
+func (c *ClientIdRequest) ValidateClientIdRequest() error {
+	if c.ClientId == "" {
+		return ErrInvalidInput
+	}
+	return nil
 }

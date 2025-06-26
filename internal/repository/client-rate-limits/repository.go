@@ -1,4 +1,4 @@
-package userratelimits
+package clientratelimits
 
 import (
 	"balancer/internal/repository"
@@ -18,6 +18,6 @@ type repo struct {
 	db *pgxpool.Pool
 }
 
-func NewUserRateLimitsRepo(db *pgxpool.Pool) repository.LimitsRepository {
+func NewClientRateLimitsRepo(db *pgxpool.Pool) repository.LimitsRepository {
 	return &repo{db: db}
 }
