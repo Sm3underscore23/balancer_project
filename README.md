@@ -81,7 +81,7 @@ make fullsetup-down
 ```sh
 make local-up
 make migration-up
-go run cmd/main.go -config-path config/local/config.yaml
+make local-run
 ```
 
 Для завершения:
