@@ -20,11 +20,15 @@ Balancer project - это балансировщик нагрузки, кото�
 - [Docker](https://github.com/docker)
 - [Docker compose](https://github.com/docker/compose)
 - [Graylog](https://graylog.org/)
+- [Jaeger](https://www.jaegertracing.io/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
 
 ### Вспомогательные
 - [PGX](https://github.com/jackc/pgx)
 - [Goose](https://github.com/pressly/goose)
 - [Squirrel](https://github.com/Masterminds/squirrel)
+- [OpenTelementry](https://opentelemetry.io/)
 
 ---
 
@@ -32,14 +36,19 @@ Balancer project - это балансировщик нагрузки, кото�
 
 ### .env
 ```txt
+CONFIG_PATH="your/config/path/"
+
 PG_PORT=1234
 PG_DATABASE_NAME=your_database_name
 PG_USER=your_pg_user
 PG_PASSWORD=your_awesome_password1234
 MIGRATION_DIR=./your_migrations/migrations
 
-GRAYLOG_PASSWORD_SECRET=somepasswordsalt
+GRAYLOG_PASSWORD_SECRET=your_awesome_password1234
 GRAYLOG_ROOT_PASSWORD_SHA2=your_sha256_password_hash
+
+GRAFANA_ADMIN_USER=your_grafana_admin_user
+GRAFANA_ADMIN_PASSWORD=your_awesome_password1234
 ```
 
 ### config
@@ -47,6 +56,10 @@ GRAYLOG_ROOT_PASSWORD_SHA2=your_sha256_password_hash
 server:                                 # balancer server settings
   host: localhost                       # balancer server host
   port: 8080                            # balancer server port
+
+tracer:                                 # tracer exporter settings
+  host: localhost                       # tracer exporter host
+  port: 4318                            # tracer exporter port
 
 ticker_rate_sec: 1                      # ticker rate for backends heath check
 
@@ -97,6 +110,8 @@ make local-down
 
 ```internal/api/handler``` - слой HTTP endpoit'ы для взаимодействия
 
+```internal/api/handler/middleware``` - набор middleware, а также впомогательных элементов
+
 ```internal/config``` - парсинг и логика инициализации конфига
 
 ```internal/integration-suite``` - итеграционные тесты
@@ -116,6 +131,12 @@ make local-down
 ```internal/service/strategy``` - логика алгоритмов для распределения нагрузки и health checks бэкендов
 
 ```internal/service/token-manager``` - модуль для ограничения частоты запросов (rate-limiting) на основе алгоритма Token Bucket
+
+```pkg/logger``` - реализация логера и вспомогательных элементов
+
+```pkg/metrics``` - реализация костомных метрик
+
+```pkg/tracing``` - реализация tracer exporter
 
 ---
 
@@ -177,6 +198,6 @@ internal/integration-suite
 - [x] Unit тесты
 - [x] Интеграционное тестирование
 - [X] Логгирование
-- [ ] Трейсинг
-- [ ] Метрики
+- [X] Трейсинг
+- [X] Метрики
 - [ ] Добавить LRU cache
